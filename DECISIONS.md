@@ -58,3 +58,43 @@ Each entry: what was picked, what was rejected, why. Future sessions read this t
 **Rejected:** One-shot "only runs once" scripts.
 **Why:** Re-runnability lets cousin debug without reflashing, and lets the buyer recover from a botched setup without starting over.
 **Tradeoff:** Slightly more code. Worth it.
+
+---
+
+## D9 — GitHub PAT is stored via git's credential-helper, never in repo config
+
+**Pick:** `sync-github.sh` keeps the remote URL credential-free (`https://github.com/u/r.git`) and authenticates each git operation with a chmod-600 credentials file consumed by `git -c credential.helper="store --file=..."`.
+**Rejected:** Embedding the PAT in origin's URL (the simpler path).
+**Why:** The embedded-URL pattern writes the token into `.git/config`, where any process inside Termux — including Claude Code itself, which has filesystem MCP access to the repo — can trivially exfiltrate it. Credential file in `$DEVBOX_HOME/git-credentials` with `chmod 600` limits the attack surface.
+**Tradeoff:** Slightly more complex sync code. Worth it for a device that's explicitly marketed as a "sandbox the agent can't escape from" — a readable PAT would make that promise a lie.
+
+## D10 — GitHub sync refuses to push to a public repo
+
+**Pick:** During `--setup`, if the named repo already exists and is not private, `sync-github.sh` aborts with an error.
+**Rejected:** Warn-and-continue; auto-privatize existing public repos.
+**Why:** Project code on a sandbox device can include secrets the user forgot to redact. Leaking that to a public repo because we didn't check is a foot-gun. Auto-privatizing someone else's existing repo is presumptuous.
+
+## D11 — MCP servers wired at user scope, not project scope
+
+**Pick:** `wizard.sh` registers every MCP with `claude mcp add --scope user`.
+**Rejected:** Default (local/project) scope.
+**Why:** Claude Code's default local scope binds MCPs to the cwd at registration time. Buyers will `cd` into various project subdirectories — registering at user scope means the servers are available everywhere without re-registration.
+
+## D12 — Google Drive sync uses drive.file, not full Drive access
+
+**Pick:** rclone setup guides the buyer to scope 3 (drive.file — files rclone creates only).
+**Rejected:** scope 1 (Full access — DevBox can see every file in the buyer's Drive).
+**Why:** DevBox only needs to read/write its own backup folder. Full-drive access violates least-privilege and would let a compromised agent enumerate the buyer's entire Google Drive. drive.file limits exposure to the DevBox backup folder only.
+**Tradeoff:** If the buyer wants to pull existing Drive files onto the device, they'd need a wider scope. For v0, that's a feature we're not offering.
+
+## D13 — Filesystem MCP install is install-fatal; github / fetch MCPs are warn-only
+
+**Pick:** `provision.sh` exits non-zero if `@modelcontextprotocol/server-filesystem` or `mcp-server-git` fails to install. github and fetch are optional.
+**Rejected:** Warn-only on everything (the original behavior — let provisioning "complete" with missing MCPs).
+**Why:** Claude Code without filesystem access is useless. Shipping a device that installed-but-broken is worse than failing early and visibly. github and fetch are nice-to-have — their absence degrades but doesn't cripple the device.
+
+## D14 — APK versions pinned with fallback to GitHub latest-release API
+
+**Pick:** `flash-device.sh` encodes an explicit version string and URL for each of the three Termux APKs, plus an empty SHA256 slot ready for a hash pin. Unauthenticated GitHub latest-release API is a fallback, not the primary path.
+**Rejected:** Always use `releases/latest` (the original behavior).
+**Why:** Unauthenticated GitHub API is rate-limited to 60 requests/hour per IP. A shop flashing 20 phones in an afternoon would either hit the limit or inherit whatever upstream breaking change happened to ship that morning. Pinning gives deterministic behavior across a batch; the fallback covers "we moved to a newer version and forgot to update the script."
