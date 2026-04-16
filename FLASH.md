@@ -1,10 +1,12 @@
 # FLASH.md — Cousin's step-by-step
 
-**Goal:** turn one factory-fresh Galaxy S22 into a DevBox in ~15 minutes.
+**Goal:** turn any factory-reset Android 12+ phone into a DevBox in ~15 minutes. No bootloader unlock, no root, no flashing machine — just ADB + USB.
+
+**Tested on:** Pixel 8, Galaxy S20 FE 5G, Galaxy S23 Ultra. Should work on any Android 12+ device.
 
 ## What you need
 
-- One **Galaxy S22** (factory-reset, battery ≥ 50%)
+- One **Android phone** (factory-reset, battery ≥ 50%)
 - A **USB-C cable**
 - A **PC with ADB installed** (Android SDK platform-tools)
 - This repo cloned locally

@@ -4,8 +4,8 @@ Joe approved this scope before sleeping. Do not re-litigate it.
 
 ## Target
 
-- **Device:** Galaxy S22 (refurbished stock from cousin's shop).
-- **OS strategy:** Stock Android 13/14 with Termux as the userland. No custom ROM in v0.
+- **Device:** Any modern Android 12+ phone. Test fleet: Google Pixel 8 128GB, Galaxy S20 FE 5G 128GB, Galaxy S23 Ultra 256GB.
+- **OS strategy:** Stock Android 12–14 with Termux as the userland. No custom ROM in v0. No bootloader unlock, no root — zero brick risk.
 - **Kiosk strategy:** Best-effort with Android Screen Pinning + launcher configuration. Full lockdown is v1.
 
 ## User experience
