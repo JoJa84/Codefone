@@ -1,0 +1,47 @@
+{
+  "_comment": "Reference MCP config for DevBox. wizard.sh registers these via 'claude mcp add' commands at first boot — this file is documentation, not directly consumed by Claude Code. Paths assume Termux layout on Android.",
+  "_termux_prefix": "/data/data/com.termux/files/usr",
+  "_home": "/data/data/com.termux/files/home",
+
+  "mcpServers": {
+    "filesystem": {
+      "description": "Read/write files under ~/projects. Scope matches what the agent is allowed to touch.",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/data/data/com.termux/files/home/projects"
+      ]
+    },
+
+    "git": {
+      "description": "Git operations (status, diff, commit, branch) within ~/projects.",
+      "command": "python",
+      "args": [
+        "-m",
+        "mcp_server_git"
+      ]
+    },
+
+    "github": {
+      "description": "GitHub API (issues, PRs, repo ops). Requires a Personal Access Token stored in ~/.devbox/github-token.",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "<populated by wizard.sh from ~/.devbox/github-token>"
+      }
+    },
+
+    "fetch": {
+      "description": "HTTP fetch of arbitrary URLs. Useful for docs lookup.",
+      "command": "python",
+      "args": [
+        "-m",
+        "mcp_server_fetch"
+      ]
+    }
+  }
+}
