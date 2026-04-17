@@ -120,14 +120,16 @@ else
         || warn "github server install failed (optional, wizard will skip this MCP)"
 fi
 
-# Python-based MCP servers (git, fetch). git is mandatory, fetch is optional.
+# Python-based MCP servers. Both optional — pydantic-core (a dependency) requires
+# Rust compilation, which fails on Termux's aarch64-unknown-linux-android target.
+# Claude Code has built-in git and web-fetch tools, so these MCPs are nice-to-have.
 for srv in "mcp-server-git"; do
     if pip show "${srv}" >/dev/null 2>&1; then
         log "  ✓ ${srv} already installed"
     else
-        log "  installing ${srv} (REQUIRED)..."
+        log "  installing ${srv} (optional — Claude Code has built-in git)..."
         pip install --quiet --no-input "${srv}" \
-            || fail "pip install ${srv} failed — cannot continue" 4
+            || warn "pip install ${srv} failed (pydantic-core needs Rust, which Termux can't build). Skipping — Claude Code's built-in git tools will be used instead."
     fi
 done
 

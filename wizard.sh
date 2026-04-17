@@ -90,7 +90,8 @@ pause
 step "1/6  Internet check"
 
 check_internet() {
-    curl -s -m 5 -o /dev/null -w "%{http_code}" https://api.anthropic.com/ 2>/dev/null | grep -q "^[23]"
+    # Use google.com — api.anthropic.com returns 401 without auth, which fails a 2xx/3xx check.
+    curl -s -m 5 -o /dev/null -w "%{http_code}" https://www.google.com/ 2>/dev/null | grep -q "^[23]"
 }
 
 if check_internet; then
