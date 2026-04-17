@@ -1,33 +1,64 @@
 # DevBox
 
-**A phone that runs Claude Code. Nothing else.**
+### Your AI agent. In your pocket. For $100.
 
-Take a Pixel. Flash it with stock Android. Open the native Linux Terminal. Install Claude Code. Boot into a full AI coding sandbox in your pocket.
+Not on a $3,000 home rig you SSH into from the couch.
+Not behind a Telegram bot proxying to a cloud VM.
+Not on a rented GPU server you're paying for by the hour.
 
-No personal data on the device. No Termux. No root. No clutter. Just Claude Code on a real Debian VM — isolated from your main machine, always in your pocket.
+**An actual AI agent, actually living in a phone, that you actually carry with you.**
 
 ---
 
-## Why
+## The 60-second pitch
 
-You want to run Claude Code with full permissions. You don't want to give it the keys to your laptop.
+A refurb Pixel 8 costs about $100. It already has:
 
-DevBox solves this by putting the agent on its own device — a physical sandbox. The agent gets unlimited access to its own filesystem, its own terminal, its own git. It can't see your browser history, your SSH keys, your company Slack. If it does something weird, you factory reset and start over. Total isolation. Zero risk.
+- A 4nm ARM SoC, 8 GB of RAM, a 4500 mAh battery, 5G, WiFi 6E, GPS, a camera
+- A hardware-secured TPM (Titan M2)
+- USB-C with host mode
+- **A Linux Terminal app shipped by Google, running a real Debian VM**
 
-And because it's a phone, you take it everywhere. Code from the couch. Debug on the train. Pair a Bluetooth keyboard at a coffee shop. Or control it remotely from your PC over WiFi — full two-way SSH, no cable needed.
+That last one is new, hiding in Developer Options, and I think almost nobody's realized what it unlocks yet.
 
-## What it actually is
+You enable it. You run `curl -fsSL https://claude.ai/install.sh | bash`. You sign in. You now have **Claude Code, natively, in your pocket**. No Termux hacks. No custom ROM. No root. No cloud relay. No Telegram duct tape.
 
-- A **Pixel 8** (or any Pixel on Android 15+) running **stock Android** — unrooted, unmodified. Real Android. Security updates included.
-- **Android's native Linux Terminal** — the AVF-backed Debian VM that ships with Android 15+. Real glibc. Full `apt`. No Termux.
-- **Claude Code CLI** installed via the official native installer (`curl -fsSL https://claude.ai/install.sh | bash`) at `~/.local/bin/claude` inside the VM.
-- **SSH server** so you can connect to the VM wirelessly from any machine on your network.
-- **State sync** — `~/projects` inside the VM syncs to GitHub (bidirectional) or Google Drive (one-way backup).
+A month ago, the cheapest respectable "AI coding rig" was a mini-PC, a Framework, or a used ThinkPad — call it $600–$3,000. DevBox is a $100 phone that fits in your jeans.
 
-## The 30-second demo
+## And here's the part that got me out of bed
 
-```
-# From your PC, over WiFi, no USB:
+The phone has a USB-C port.
+
+Once Claude Code is sitting at a root shell inside a Debian VM on this phone, **the phone stops being a phone**. It becomes a universal diagnostic and control surface for whatever you plug into it:
+
+- Plug in a router → Claude configures your router
+- Plug in an Arduino / ESP32 → Claude flashes your firmware
+- Plug in an OBD-II adapter → Claude reads your car's engine codes
+- Plug in an HVAC service tool → Claude diagnoses the AC unit in your basement
+- Plug in a USB-to-serial → Claude talks to any piece of industrial gear
+- Plug in a switch or NAS → the IT guy is now walking the building with his whole rig in his pocket
+
+And scale that one step further: **a cheap phone running a purpose-built VM image becomes a specialty device for any vertical.** Field tech. Bench instrument. Inventory scanner. POS terminal. Kiosk. Lab controller. The phone is just the shell. The VM is the product.
+
+That's the part I can't stop thinking about. I'd love other people to think about it too.
+
+---
+
+## What it actually is, technically
+
+- **Pixel 8 or newer** (Pixel-only for now — Linux Terminal is Google's AVF stack; Samsung etc. don't expose it yet)
+- **Stock Android 15+** — unrooted, unmodified, OTA updates intact
+- **Android's built-in Linux Terminal app** — a real Debian VM via Android Virtualization Framework. Real glibc, real `apt`, real systemd, real root-in-guest
+- **Claude Code CLI**, installed via Anthropic's official installer inside the VM
+- **SSH** from your PC over WiFi so you can type from a real keyboard with the phone in your pocket
+- **~15 min setup, end to end**
+
+No bootloader unlock. No Magisk. Nothing you can brick. Factory reset = clean slate in 5 minutes.
+
+## 30-second demo
+
+```bash
+# From your PC, over WiFi:
 $ ssh -p 2222 droid@192.168.1.65
 
 droid@debian:~$ claude
@@ -44,119 +75,74 @@ droid@debian:~$ claude
   I'll create that for you...
 ```
 
-You're SSH'd into a Debian VM on a phone in your pocket, talking to Claude Code, building software. From your couch. Or your office. Or the other side of the house.
+You're SSH'd into a Debian VM on a phone in your pocket, talking to Claude Code, building software. From your couch. Or your office. Or the other side of the house. Or the car.
 
 ## Build your own (15 minutes)
 
-Everything you need is in this repo. No special equipment — just a USB cable and a laptop with Chrome/Edge.
+You need:
 
-### What you need
+- Pixel 8 or newer (refurb is fine)
+- USB-C cable, WiFi, a PC with Chrome/Edge and ADB
+- An Anthropic account
 
-- A **Pixel 8 or newer** (required — Linux Terminal is Pixel-only as of Android 16)
-- A USB-C cable
-- A PC with ADB installed ([download](https://developer.android.com/tools/releases/platform-tools))
-- A WiFi network
-- An Anthropic account ([sign up](https://claude.ai))
-- Chrome or Edge (for [flash.android.com](https://flash.android.com))
+Steps:
 
-### Steps
+1. **Flash the phone to clean stock Android.** Open [flash.android.com](https://flash.android.com), select your Pixel, Wipe + Force Flash, leave bootloader locked. ~15 min. Full walkthrough in [FLASH.md](FLASH.md).
+2. **Enable Linux Terminal.** Settings → About phone → tap Build number 7× → Developer options → Linux development environment → On. Open the Terminal app. It downloads ~565 MB Debian rootfs.
+3. **Install Claude Code inside the VM:**
+   ```bash
+   curl -fsSL https://claude.ai/install.sh | bash
+   echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc && source ~/.bashrc
+   claude login
+   claude
+   ```
+4. **(Optional) SSH from your PC:** `sudo apt install -y openssh-server`, bind port 2222, add your key, forward the port in the Terminal app's settings, and `ssh -p 2222 droid@<phone-ip>` from your laptop.
 
-1. **Flash the phone to clean stock Android** ([full guide](FLASH.md))
-   - Open [flash.android.com](https://flash.android.com) in Chrome/Edge.
-   - Select your Pixel → latest stable build → Wipe Device ON, Force Flash all Partitions ON, Lock Bootloader OFF.
-   - ~15 min. Phone reboots into Android setup.
-
-2. **Enable Linux Terminal**
-   - Settings → About phone → tap Build number 7× → Developer options.
-   - Settings → System → Developer options → **Linux development environment** → toggle **On**.
-   - Open the Linux Terminal app → it downloads a ~565 MB Debian rootfs.
-
-3. **Install Claude Code inside the Debian VM**
-   - Open Terminal app. At the `droid@debian:~$` prompt:
-     ```
-     curl -fsSL https://claude.ai/install.sh | bash
-     echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
-     source ~/.bashrc
-     claude --version
-     ```
-   - Should print `2.1.113 (Claude Code)` or newer.
-
-4. **Sign in + go**
-   - `claude login` → follow browser OAuth prompt → done.
-   - `claude` → start building.
-
-### Optional: SSH from your PC (wireless control)
-
-Inside the VM:
-```
-sudo apt install -y openssh-server
-echo "Port 2222" | sudo tee -a /etc/ssh/sshd_config
-sudo systemctl enable --now ssh
-mkdir -p ~/.ssh && echo '<your-public-key>' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys
-```
-
-In the Terminal app's settings → **Port forwarding** → add **2222**.
-
-From your PC:
-```bash
-adb forward tcp:2222 tcp:2222
-ssh -p 2222 droid@127.0.0.1
-```
-
-Or over WiFi once the phone has a stable LAN IP: `ssh -p 2222 droid@<phone-ip>`.
+That's it. Full docs in [FLASH.md](FLASH.md) and [DECISIONS.md](DECISIONS.md).
 
 ## What's inside
 
 | File | What it does |
 | --- | --- |
-| [`FLASH.md`](FLASH.md) | Step-by-step for turning a fresh Pixel into a DevBox |
-| [`SCOPE.md`](SCOPE.md) | Locked v0.2 scope — what's in, what's out |
-| [`DECISIONS.md`](DECISIONS.md) | Build-time tradeoffs and why |
-| [`kiosk-setup.md`](kiosk-setup.md) | Screen-pin + hide other apps for a single-purpose feel |
-| [`reflash-to-stock.md`](reflash-to-stock.md) | Restore the phone to factory Android |
-| `sync-github.sh` · `sync-drive.sh` | Legacy — bidirectional state sync helpers (carried over from Termux path) |
-| `provision.sh` · `flash-device.sh` · `wizard.sh` | Legacy — Termux-based provisioning for Path B devices only |
+| [`FLASH.md`](FLASH.md) | Step-by-step Pixel → DevBox |
+| [`SCOPE.md`](SCOPE.md) | What's in v0.2, what's not |
+| [`DECISIONS.md`](DECISIONS.md) | Build-time tradeoffs and why (D1–D20) |
+| [`kiosk-setup.md`](kiosk-setup.md) | Screen-pin + hide apps for single-purpose feel |
+| [`reflash-to-stock.md`](reflash-to-stock.md) | Restore to factory Android |
 
 ## FAQ
 
-**Will this brick my phone?**
-No. On Pixels, the bootloader stays unlocked and the A/B slot system gives us a bailout lane. Worst case: re-run `flash.android.com` — back to stock in 15 minutes.
+**Will this brick my phone?** No. Bootloader stays locked, OTA updates keep working, worst case is a factory reset.
 
-**Why Pixel-only?**
-Android's Linux Terminal is a Google-specific feature shipped with Pixel's AVF stack. Samsung and other OEMs don't yet expose it. We expect broader support in late 2026 and will add devices as they land.
+**Why Pixel-only?** Android's Linux Terminal is a Google-specific AVF feature. Samsung and other OEMs haven't shipped it yet. Expecting broader support late 2026.
 
-**Why not Termux?**
-Claude Code 2.1.x's pre-built native binary requires a musl dynamic linker that Termux's Bionic libc can't provide. Termux works for Claude 2.0.x via `node ./cli.js`, but that's a fragile hack. The Debian VM gives us real glibc and Claude's official installer works in one command. See `DECISIONS.md` D19.
+**Why not Termux?** Claude Code 2.1's native binary needs a libc Termux can't provide (bionic vs musl/glibc ABI mismatch). Real Debian via AVF makes the official installer just work. See D19.
 
-**Why no root / Magisk?**
-The Debian VM gives us full root inside a sandboxed guest — no Android-side privilege escalation needed. Magisk also silently breaks after every monthly OTA on Pixel, which makes it a support nightmare for a product that should "just work." See `DECISIONS.md` D20.
+**Why no root / Magisk?** The VM is already a root sandbox. Magisk on the host silently breaks on monthly OTAs. We dropped it. See D20.
 
-**Does it need a SIM card?**
-No. WiFi only. Add a SIM if you want cellular data, but it's not required.
+**Battery?** Claude is network-bound, not compute-bound. A full charge lasts a workday of moderate use.
 
-**Can I use it as a regular phone too?**
-Yes — it's full Android, you can install any APK. But the point is that you *don't*. The isolation is the feature.
+**Control from PC?** Yes — `adb forward` + `ssh` over USB, or direct SSH over WiFi.
 
-**What about battery life?**
-Claude Code sessions are network calls, not local compute. Battery impact is similar to browsing the web. A full charge lasts a workday of moderate use. The Debian VM idles cheap — ~1 GB RAM floor, minimal CPU when not typing.
-
-**How do I update Claude Code?**
-Inside the VM: `claude update` (official self-updater).
-
-**Can I control it from my PC?**
-Yes. Over USB (`adb forward` + `ssh`) or wirelessly over SSH once you know the phone's LAN IP.
-
-**What about "Preparing terminal" hanging forever?**
-Known Android 15/16 quirk — the VM's `virtualizationservice` wedges when the screen locks mid-session. Fix: force-stop the Terminal app (long-press icon → App info → Force stop) and reopen. Takes 5 seconds. We're scripting a `devbox revive` one-tap recovery for v0.3.
+**"Preparing terminal" hangs?** Known AVF quirk when the screen locks mid-session. Force-stop the Terminal app and reopen. Scripting a one-tap recovery for v0.3.
 
 ## Status
 
-**v0.2 — Pixel 8 shipping on stock Android + Linux Terminal VM.**
-- **Pixel 8:** ✅ stock Android 16 flashed, ✅ Linux Terminal enabled, ✅ Claude Code 2.1.113 native + SSH + PC access confirmed. Ready for replication.
-- **Galaxy S20 FE (Verizon):** legacy Termux SKU — works for Claude 2.0.x only. Not the primary path.
-- **Galaxy S23 Ultra:** not started.
+**v0.2 — Pixel 8 reference build shipping.**
+Stock Android 16 + Linux Terminal VM + Claude Code 2.1.113 native + SSH + PC access, all confirmed on a live unit.
 
-Next: small production run on Pixel 8 stock, eBay/Skool listings.
+Next up: a `devbox revive` script for the AVF wedge, MCP wiring inside the VM, maybe a small production run.
+
+## I'd love help with
+
+I'm a hobbyist, not a developer. If you see things in this repo that are wrong, short-sighted, or way less ambitious than they should be — please open an issue or a PR. In particular:
+
+- **USB-C peripheral passthrough into the AVF guest** — how deep can we go? OBD-II readers, serial consoles, flash programmers, audio/video capture?
+- **VM images as product** — what does a "DevBox image for HVAC techs" or "DevBox image for network admins" actually contain?
+- **Security model** — where are the cracks in isolating the guest from the host's contacts/photos/etc.?
+- **Older Pixels / other OEMs** — any clean way to backport this to pre-AVF hardware?
+
+If any of that interests you, say hi.
 
 ## License
 
