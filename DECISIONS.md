@@ -133,3 +133,26 @@ Stock Android with bloatware stripped + optional Magisk root gives root-where-we
 **Rejected:** Patching `boot.img` (the pre-Android 13 path). Flashing to both slots simultaneously.
 **Why:** Pixel 8 (shiba) and all Pixel 7-class+ devices split kernel and ramdisk into separate partitions — `boot.img` holds the kernel, `init_boot.img` holds the ramdisk. Magisk's code-injection point is the ramdisk. Patching the wrong partition does nothing (if we're lucky) or bootloops (if we're not). Flashing only the active slot preserves the inactive slot as a clean-stock recovery option: `fastboot set_active <other>` recovers a botched root in 3 seconds.
 **Tradeoff:** Requires knowing which partition to patch per device. Magisk v26+ auto-detects from the image type, so as long as we feed it the right file, it patches correctly. We also document the partition explicitly in FLASH.md so nothing relies on implicit detection.
+
+---
+
+## D19 — Pivot from Termux to Android's Linux Terminal (Debian VM) on Pixel (2026-04-17)
+
+**Pick:** On Pixel 8+ (Android 15+), Claude Code runs inside **Android's native Linux Terminal** — a Debian VM backed by the Android Virtualization Framework (AVF). Termux is abandoned on this path.
+**Rejected:** Termux on Pixel (the original v0.2 plan).
+**Why:** Claude Code 2.1.x ships a pre-built native binary (`@anthropic-ai/claude-code-linux-arm64-musl`) that expects a musl dynamic linker at `/lib/ld-musl-aarch64.so.1`. Termux's Bionic libc lacks that linker — the binary fails to exec on Android at the ABI level. Patching Termux to fake a `linux-arm64-musl` platform gets the npm install past the platform check, but the binary still can't load. Android 15's Linux Terminal provides a real Debian rootfs with glibc, where the official installer `curl -fsSL https://claude.ai/install.sh | bash` produces a working binary in ~30 seconds. Confirmed `2.1.113 (Claude Code)` running natively on Pixel 8.
+**Tradeoff:**
+- **Pixel-only.** Samsung (and any non-Pixel Android 15+ device without the AVF Terminal) stays on the Termux path as legacy. Google is expected to broaden AVF Terminal support in late 2026.
+- **VM overhead.** 565 MB rootfs + ~1 GB RAM floor. Acceptable on an 8 GB Pixel 8.
+- **"Preparing terminal" hang quirk.** The VM can wedge when the screen locks mid-session. Fix: force-stop + relaunch. Product mitigation: ship a `devbox revive` one-tap script.
+- **No Termux add-ons** (Termux:Boot autostart, Termux:API for Android intents). We lose boot-time autostart but gain a real Linux userland. Net positive for a coding agent; neutral for device-integration features we weren't using anyway.
+
+## D20 — Drop Magisk root from DevBox's core requirements (2026-04-17)
+
+**Pick:** Ship DevBox on **pure stock Android**, no root. Magisk is neither required nor recommended.
+**Rejected:** Magisk root as an additive feature (D17).
+**Why:** The original motivation for root was (a) "run Claude Code with full system access" and (b) kiosk-mode launcher replacement. (a) is solved more cleanly by the Linux Terminal VM — `droid` has full root inside the Debian guest with zero Android-side privilege. (b) turns out to not need root on modern Android (launcher default + Screen Pinning cover the UX). Meanwhile, Magisk on Pixel has a recurring failure mode: Android auto-applies OTAs to the inactive slot, and when the device reboots into that slot, root is silently gone (init_boot reverted to stock). Observed firsthand on our test unit — an OTA to `CP1A.260305.018` flipped the phone from rooted slot B to clean slot A with no warning, making the Magisk app show "Installed: N/A." A product that buyers expect to "just work" cannot have root silently break on a monthly cadence.
+**Tradeoff:**
+- **Lose iptables-level tweaks** (custom NAT, VPN rules). Not needed for the product.
+- **Lose Magisk-module kiosk hardening.** Accept Screen Pinning as the best-available soft lockdown.
+- **Simpler docs, smaller attack surface, no "re-root after OTA" support burden.** Net big win for v0.2 shipping quality.

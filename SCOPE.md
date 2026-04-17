@@ -1,35 +1,36 @@
-# SCOPE (v0.2 — post-Magisk-pivot, locked)
+# SCOPE (v0.2 — Linux Terminal pivot, locked)
 
 Joe approved this scope. Do not re-litigate it.
 
 ## Target
 
-- **Device:** Any modern Android 12+ phone. Test fleet: Google Pixel 8 128GB, Galaxy S20 FE 5G 128GB, Galaxy S23 Ultra 256GB.
+- **Device:** Pixel 8+ running Android 15+. Linux Terminal is Pixel-exclusive at the moment. Test fleet: Google Pixel 8 128GB (primary), Galaxy S20 FE 5G 128GB (legacy Termux SKU), Galaxy S23 Ultra 256GB.
 - **OS strategy (two paths):**
-  - **Path A — Unlockable bootloader (Pixel, unlocked Samsungs):** stock Android flashed via [flash.android.com](https://flash.android.com). Bootloader unlocked. Magisk root via `init_boot.img` patch. Termux runs root-aware.
-  - **Path B — Carrier-locked bootloader (e.g., Verizon-locked Samsung S20 FE):** stock Android as shipped. Bootloader stays locked. Bloatware stripped via `adb shell pm uninstall --user 0 ...`. Unrooted Termux — still full Linux userland, just no `su`.
+  - **Path A — Pixel 8+, Android 15+ (primary, recommended):** stock Android flashed via [flash.android.com](https://flash.android.com). Bootloader stays unlocked for reflash safety. **No root. No Termux.** Claude Code runs inside Android's native **Linux Terminal** — an AVF-backed Debian VM with real glibc. Official installer `curl -fsSL https://claude.ai/install.sh | bash` drops `claude` at `~/.local/bin/claude` in the VM.
+  - **Path B — Legacy Termux (carrier-locked Samsungs, pre-Android 15 devices):** stock Android as shipped. Bootloader stays locked. Bloatware stripped via `adb shell pm uninstall --user 0 ...`. Claude Code in **Termux**. Retained only for SKUs that can't run the Linux Terminal.
 - **Custom ROM:** explicitly rejected. See `DECISIONS.md` D15 (pivot from LineageOS).
-- **Kiosk strategy:** best-effort with Android Screen Pinning + launcher configuration. Full lockdown is v1.
+- **Root (Magisk):** explicitly rejected. See `DECISIONS.md` D20 — OTA breakage + unnecessary given VM approach.
+- **Kiosk strategy:** Screen Pinning + launcher configuration. Full hardened lockdown is v1.
 
 ## User experience
 
-- **First boot:** Wizard walks buyer through WiFi → Anthropic OAuth (`claude login`) → keyboard mode (voice-first or Bluetooth keyboard) → sync choice (GitHub or Drive) → done.
-- **Normal use:** Unlock phone → tap DevBox icon → terminal opens running `claude`. Screen pinning keeps them there.
-- **Code sync:** `~/projects` (code only — not `~/.claude`) pushes to the buyer's chosen remote on demand via `devbox sync`. GitHub path is bidirectional (pull + push); Drive path is one-way backup (push only).
-- **Why not sync `~/.claude`?** It contains Claude Code credentials and conversation history. Keeping it on-device avoids leaking auth tokens to a cloud remote and matches the "isolation from your main machine" positioning.
+- **First boot:** Wizard walks buyer through WiFi → open Linux Terminal → Debian VM auto-provisions → Anthropic OAuth (`claude login`) → keyboard mode (voice-first or Bluetooth keyboard) → sync choice (GitHub or Drive) → done.
+- **Normal use:** Unlock phone → tap Linux Terminal icon → VM resumes → shell drops into `~/projects` → type `claude`.
+- **Code sync:** `~/projects` inside the VM pushes to the buyer's chosen remote on demand via `devbox sync`. GitHub path is bidirectional (pull + push); Drive path is one-way backup (push only). `~/.claude` stays on-device.
+- **Remote control:** SSH from PC works out of the box — Terminal app's port forwarding exposes VM's sshd on Android localhost, `adb forward` or WiFi bridges it to PC.
 
-## Claude Code setup
+## Claude Code setup (Path A — Linux Terminal)
 
-- Installed in Termux via `npm install -g @anthropic-ai/claude-code` (official package).
+- Installed via `curl -fsSL https://claude.ai/install.sh | bash` inside the Debian VM.
+- Binary at `~/.local/bin/claude` (native glibc, ~200 MB).
+- PATH persisted via `~/.profile` and `~/.bashrc` so both interactive and SSH sessions find it.
 - MCP servers preloaded: **filesystem, git, github, web-fetch**.
-- Billing: **BYOA** (buyer brings own Anthropic account). Wizard links out to `claude.ai` signup if they don't have one.
+- Billing: **BYOA** (buyer brings own Anthropic account).
 
-## Root-enabled features (Path A only, best-effort)
+## Path B legacy Termux setup (Samsung only)
 
-- `su` available to Termux via Magisk "Superuser" grant.
-- System-level writes for pinning/launcher lockdown (kiosk-v2 candidate).
-- Systemless hosts module option for ad-blocking at the DNS level on-device.
-- Everything above is **additive** — Path B devices ship without them and still work.
+- Termux from F-Droid, `npm install -g @anthropic-ai/claude-code`.
+- ⚠️ Known issue: Claude Code 2.1.x pre-built binary fails on Termux/Bionic. Fallback workaround: pin to 2.0.x or use `node <entrypoint>` against the JS source. Path B is legacy — prefer Path A for all new units.
 
 ## Branding
 
