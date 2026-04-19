@@ -16,7 +16,7 @@ Joe approved this scope. Do not re-litigate it.
 
 - **First boot:** Wizard walks buyer through WiFi → open Linux Terminal → Debian VM auto-provisions → Anthropic OAuth (`claude login`) → keyboard mode (voice-first or Bluetooth keyboard) → sync choice (GitHub or Drive) → done.
 - **Normal use:** Unlock phone → tap Linux Terminal icon → VM resumes → shell drops into `~/projects` → type `claude`.
-- **Code sync:** `~/projects` inside the VM pushes to the buyer's chosen remote on demand via `devbox sync`. GitHub path is bidirectional (pull + push); Drive path is one-way backup (push only). `~/.claude` stays on-device.
+- **Code sync:** `~/projects` inside the VM pushes to the buyer's chosen remote on demand via `codefone sync`. GitHub path is bidirectional (pull + push); Drive path is one-way backup (push only). `~/.claude` stays on-device.
 - **Remote control:** SSH from PC works out of the box — Terminal app's port forwarding exposes VM's sshd on Android localhost, `adb forward` or WiFi bridges it to PC.
 
 ## Claude Code setup (Path A — Linux Terminal)
@@ -34,7 +34,7 @@ Joe approved this scope. Do not re-litigate it.
 
 ## Branding
 
-- Name: **DevBox** for v0. TM risk flagged in `BRAND-RISK.md`.
+- Name: **Codefone** for v0. TM risk flagged in `BRAND-RISK.md`.
 - Brand string appears in user-visible docs only — never hardcoded into file names or scripts. Rename is cheap.
 
 ## What's explicitly NOT in v0

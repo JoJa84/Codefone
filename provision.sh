@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
 #
-# DevBox provision.sh
+# Codefone provision.sh
 #
 # Runs inside Termux on a freshly-flashed Android 12+ phone (Pixel with Magisk
 # root or stock-locked Samsung). Installs Node, Python, git, Claude Code CLI,
@@ -31,15 +31,15 @@ if [ ! -d "/data/data/com.termux" ]; then
     exit 1
 fi
 
-log() { printf "\033[1;36m[devbox]\033[0m %s\n" "$*"; }
-warn() { printf "\033[1;33m[devbox:warn]\033[0m %s\n" "$*"; }
-fail() { printf "\033[1;31m[devbox:fail]\033[0m %s\n" "$*" >&2; exit "${2:-1}"; }
+log() { printf "\033[1;36m[codefone]\033[0m %s\n" "$*"; }
+warn() { printf "\033[1;33m[codefone:warn]\033[0m %s\n" "$*"; }
+fail() { printf "\033[1;31m[codefone:fail]\033[0m %s\n" "$*" >&2; exit "${2:-1}"; }
 
-DEVBOX_HOME="$HOME/.devbox"
-DEVBOX_VERSION="0.1.0"
-MARKER_FILE="$DEVBOX_HOME/provisioned"
+CODEFONE_HOME="$HOME/.codefone"
+CODEFONE_VERSION="0.1.0"
+MARKER_FILE="$CODEFONE_HOME/provisioned"
 
-mkdir -p "$DEVBOX_HOME" "$HOME/projects"
+mkdir -p "$CODEFONE_HOME" "$HOME/projects"
 
 # ─── Storage permission (for ~/storage symlinks into shared storage) ────────
 
@@ -148,62 +148,62 @@ done
 # actual MCP state lives in ~/.claude.json and is managed by wizard.sh via
 # `claude mcp add` commands. We do not copy mcp-config.json anywhere here.
 
-# ─── devbox helper command ──────────────────────────────────────────────────
+# ─── codefone helper command ──────────────────────────────────────────────────
 
-log "Installing 'devbox' helper command..."
-DEVBOX_BIN="$PREFIX/bin/devbox"
-cat > "$DEVBOX_BIN" << 'DEVBOX_EOF'
+log "Installing 'codefone' helper command..."
+CODEFONE_BIN="$PREFIX/bin/codefone"
+cat > "$CODEFONE_BIN" << 'CODEFONE_EOF'
 #!/data/data/com.termux/files/usr/bin/bash
-# DevBox helper — update / sync / reflash / status
+# Codefone helper — update / sync / reflash / status
 set -euo pipefail
 
-DEVBOX_HOME="$HOME/.devbox"
-DEVBOX_CMD="${1:-help}"
+CODEFONE_HOME="$HOME/.codefone"
+CODEFONE_CMD="${1:-help}"
 
-case "$DEVBOX_CMD" in
+case "$CODEFONE_CMD" in
     update)
-        echo "[devbox] updating Claude Code and MCP servers..."
+        echo "[codefone] updating Claude Code and MCP servers..."
         npm update -g @anthropic-ai/claude-code
         npm update -g @modelcontextprotocol/server-filesystem \
                       @modelcontextprotocol/server-github
         pip install --quiet --upgrade mcp-server-git mcp-server-fetch
-        echo "[devbox] update complete."
+        echo "[codefone] update complete."
         ;;
     sync)
-        METHOD=$(cat "$DEVBOX_HOME/sync-method" 2>/dev/null || echo "none")
+        METHOD=$(cat "$CODEFONE_HOME/sync-method" 2>/dev/null || echo "none")
         case "$METHOD" in
-            github)  bash "$DEVBOX_HOME/sync-github.sh" ;;
-            drive)   bash "$DEVBOX_HOME/sync-drive.sh" ;;
-            none)    echo "[devbox] no sync method configured. Run 'devbox wizard' to set up." ;;
-            *)       echo "[devbox] unknown sync method: $METHOD" ;;
+            github)  bash "$CODEFONE_HOME/sync-github.sh" ;;
+            drive)   bash "$CODEFONE_HOME/sync-drive.sh" ;;
+            none)    echo "[codefone] no sync method configured. Run 'codefone wizard' to set up." ;;
+            *)       echo "[codefone] unknown sync method: $METHOD" ;;
         esac
         ;;
     wizard)
-        bash "$DEVBOX_HOME/wizard.sh"
+        bash "$CODEFONE_HOME/wizard.sh"
         ;;
     status)
-        echo "DevBox version:    $(cat "$DEVBOX_HOME/version" 2>/dev/null || echo unknown)"
+        echo "Codefone version:    $(cat "$CODEFONE_HOME/version" 2>/dev/null || echo unknown)"
         echo "Claude Code:       $(claude --version 2>/dev/null || echo 'NOT INSTALLED')"
         echo "Node:              $(node --version 2>/dev/null || echo 'NOT INSTALLED')"
         echo "Python:            $(python --version 2>/dev/null || echo 'NOT INSTALLED')"
-        echo "Sync method:       $(cat "$DEVBOX_HOME/sync-method" 2>/dev/null || echo 'not configured')"
+        echo "Sync method:       $(cat "$CODEFONE_HOME/sync-method" 2>/dev/null || echo 'not configured')"
         echo "Projects dir:      $HOME/projects"
         ;;
     reflash)
-        echo "[devbox] reflash-to-stock instructions live in the docs shipped with the device."
-        echo "See $DEVBOX_HOME/reflash-to-stock.md (if present) or the repo on GitHub."
+        echo "[codefone] reflash-to-stock instructions live in the docs shipped with the device."
+        echo "See $CODEFONE_HOME/reflash-to-stock.md (if present) or the repo on GitHub."
         ;;
     help|*)
-        echo "DevBox helper commands:"
-        echo "  devbox update    — update Claude Code and MCP servers"
-        echo "  devbox sync      — push/pull state to configured remote"
-        echo "  devbox wizard    — re-run the first-boot wizard"
-        echo "  devbox status    — show installed versions and config"
-        echo "  devbox reflash   — point at reflash-to-stock instructions"
+        echo "Codefone helper commands:"
+        echo "  codefone update    — update Claude Code and MCP servers"
+        echo "  codefone sync      — push/pull state to configured remote"
+        echo "  codefone wizard    — re-run the first-boot wizard"
+        echo "  codefone status    — show installed versions and config"
+        echo "  codefone reflash   — point at reflash-to-stock instructions"
         ;;
 esac
-DEVBOX_EOF
-chmod +x "$DEVBOX_BIN"
+CODEFONE_EOF
+chmod +x "$CODEFONE_BIN"
 
 # ─── Termux:Boot integration ────────────────────────────────────────────────
 # If Termux:Boot is installed, drop a script in ~/.termux/boot/ so the wizard
@@ -212,7 +212,7 @@ chmod +x "$DEVBOX_BIN"
 BOOT_DIR="$HOME/.termux/boot"
 mkdir -p "$BOOT_DIR"
 
-cat > "$BOOT_DIR/01-devbox-autostart.sh" << 'BOOT_EOF'
+cat > "$BOOT_DIR/01-codefone-autostart.sh" << 'BOOT_EOF'
 #!/data/data/com.termux/files/usr/bin/bash
 # Runs on boot if Termux:Boot is installed.
 # Keeps CPU awake during provisioning / setup, then hands off to the wizard
@@ -220,30 +220,30 @@ cat > "$BOOT_DIR/01-devbox-autostart.sh" << 'BOOT_EOF'
 
 termux-wake-lock
 
-if [ ! -f "$HOME/.devbox/provisioned" ]; then
+if [ ! -f "$HOME/.codefone/provisioned" ]; then
     # Not yet set up — do nothing; user will open Termux manually to finish.
     exit 0
 fi
 
-if [ ! -f "$HOME/.devbox/wizard-done" ]; then
+if [ ! -f "$HOME/.codefone/wizard-done" ]; then
     # Provisioned but wizard not completed — run wizard on next Termux open.
     exit 0
 fi
 
 # All set up — start a detached tmux session so Claude Code is ready
 # when the buyer opens Termux.
-tmux has-session -t devbox 2>/dev/null || \
-    tmux new-session -d -s devbox "cd ~/projects && claude || bash"
+tmux has-session -t codefone 2>/dev/null || \
+    tmux new-session -d -s codefone "cd ~/projects && claude || bash"
 BOOT_EOF
-chmod +x "$BOOT_DIR/01-devbox-autostart.sh"
+chmod +x "$BOOT_DIR/01-codefone-autostart.sh"
 
 # ─── Termux login / welcome ─────────────────────────────────────────────────
 
-# Replace the default Termux motd with a DevBox welcome. Runs on every new
+# Replace the default Termux motd with a Codefone welcome. Runs on every new
 # Termux session.
 
 cat > "$HOME/.bashrc" << 'BASHRC_EOF'
-# DevBox bashrc
+# Codefone bashrc
 [ -f "$PREFIX/etc/profile" ] && . "$PREFIX/etc/profile" 2>/dev/null || true
 
 export PATH="$HOME/.local/bin:$PATH"
@@ -251,17 +251,17 @@ export EDITOR=nano
 export PAGER=less
 
 # First-time wizard auto-run
-if [ -f "$HOME/.devbox/provisioned" ] && [ ! -f "$HOME/.devbox/wizard-done" ]; then
-    bash "$HOME/.devbox/wizard.sh"
+if [ -f "$HOME/.codefone/provisioned" ] && [ ! -f "$HOME/.codefone/wizard-done" ]; then
+    bash "$HOME/.codefone/wizard.sh"
 fi
 
 # Attach to Claude Code session if running
-if [ -f "$HOME/.devbox/wizard-done" ] && [ -z "${TMUX:-}" ]; then
-    if tmux has-session -t devbox 2>/dev/null; then
-        exec tmux attach -t devbox
+if [ -f "$HOME/.codefone/wizard-done" ] && [ -z "${TMUX:-}" ]; then
+    if tmux has-session -t codefone 2>/dev/null; then
+        exec tmux attach -t codefone
     else
         cd ~/projects
-        exec tmux new-session -s devbox "claude || bash"
+        exec tmux new-session -s codefone "claude || bash"
     fi
 fi
 
@@ -274,15 +274,15 @@ BASHRC_EOF
 
 # ─── Mark provisioned ───────────────────────────────────────────────────────
 
-echo "$DEVBOX_VERSION" > "$DEVBOX_HOME/version"
+echo "$CODEFONE_VERSION" > "$CODEFONE_HOME/version"
 date -u +"%Y-%m-%dT%H:%M:%SZ" > "$MARKER_FILE"
 
-# Copy wizard.sh and sync scripts into ~/.devbox/ if they're alongside this script
+# Copy wizard.sh and sync scripts into ~/.codefone/ if they're alongside this script
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 for f in wizard.sh sync-github.sh sync-drive.sh reflash-to-stock.md; do
     if [ -f "$SCRIPT_DIR/$f" ]; then
-        cp "$SCRIPT_DIR/$f" "$DEVBOX_HOME/$f"
-        [ "${f##*.}" = "sh" ] && chmod +x "$DEVBOX_HOME/$f"
+        cp "$SCRIPT_DIR/$f" "$CODEFONE_HOME/$f"
+        [ "${f##*.}" = "sh" ] && chmod +x "$CODEFONE_HOME/$f"
     fi
 done
 
@@ -292,6 +292,6 @@ log ""
 log "Next steps:"
 log "  1. Reboot the device (or open a fresh Termux session)"
 log "  2. The first-boot wizard will run automatically"
-log "  3. Run 'devbox status' any time to check state"
+log "  3. Run 'codefone status' any time to check state"
 log ""
-log "To re-run the wizard manually: devbox wizard"
+log "To re-run the wizard manually: codefone wizard"

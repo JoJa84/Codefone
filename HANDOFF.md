@@ -13,7 +13,7 @@
    - `claude login` OAuth flow — walk through it once on this unit, document any snags.
    - Confirm `claude` interactive UI renders OK on Pixel 8's 6.2" screen at default font.
    - Disable auto-OTAs on this reference unit: Settings → System → Software update → Auto-download OFF (avoid the OTA-slot-flip quirk).
-2. **Write `devbox revive` script** — one-tap `am force-stop com.android.virtualization.terminal` + relaunch to cure "Preparing terminal" hang. Ship as an ADB-invokable script AND as an on-device shortcut.
+2. **Write `codefone revive` script** — one-tap `am force-stop com.android.virtualization.terminal` + relaunch to cure "Preparing terminal" hang. Ship as an ADB-invokable script AND as an on-device shortcut.
 3. **MCP wiring inside the Debian VM** — filesystem, git, github, web-fetch. Need to register via `claude mcp add --scope user`. Test each.
 4. **Path B bloatware-strip script** — consolidate 195 commands into `strip-bloat-s20.sh`.
 5. **Galaxy S23 Ultra** — acquire, repeat Path A if it's on Android 15+ with Linux Terminal available, else Path B.
@@ -22,7 +22,7 @@
 ## Blockers for shipping a production run
 
 - [ ] `claude login` + first real session validated on Pixel 8.
-- [ ] `devbox revive` script written and tested.
+- [ ] `codefone revive` script written and tested.
 - [ ] MCP servers wired inside the Debian VM.
 - [ ] `strip-bloat-s20.sh` checked in (Path B only).
 - [ ] Logo selected (5 options generated, none chosen).
@@ -30,7 +30,7 @@
 
 ## What happened in this session (2026-04-17)
 
-1. Resumed from dropped session. Read `project:devbox` from Open Brain.
+1. Resumed from dropped session. Read `project:codefone` from Open Brain.
 2. Flashed Pixel 8 → rooted with Magisk v30.7 (slot B). Confirmed root.
 3. Installed Termux + provisioning scripts. Ran `provision.sh`. Node + Python + Claude Code CLI via npm.
 4. **Claude Code binary failed to exec** — Termux Node reports `platform=android`, Claude's native binary (`@anthropic-ai/claude-code-linux-arm64-musl`) expects a musl linker Bionic doesn't have. Wrote `fix-claude-termux.sh` to patch platform detection + install the musl variant; installer progressed but binary still ENOENT on exec.
@@ -56,15 +56,15 @@
 
 | Artifact | Location | Purpose |
 | --- | --- | --- |
-| Repo | `R:\Projects\ai-phone-agent` + `github.com/JoJa84/DevBox` | Source of truth |
+| Repo | `R:\Projects\ai-phone-agent` + `github.com/JoJa84/Codefone` | Source of truth |
 | ADB/fastboot | `C:\platform-tools` | Device communication |
 | Factory image (shiba) | `R:\Downloads\Delete Later\shiba-factory.zip` | Stock Android 16 for Pixel 8 reflash |
 | Joe's PC SSH key | `C:\Users\Joe\.ssh\id_ed25519(.pub)` | Installed in VM's authorized_keys |
-| Open Brain canonical | `project:devbox` (ID 2292161) | Long-term memory — needs update for D19/D20 |
+| Open Brain canonical | `project:codefone` (ID 2292161) | Long-term memory — needs update for D19/D20 |
 
 ## Protocol for any continuation sessions
 
-1. **Check Open Brain** — `memory_search "project:devbox"` returns canonical state.
+1. **Check Open Brain** — `memory_search "project:codefone"` returns canonical state.
 2. **Read `SCOPE.md`** — locked v0.2 scope, Linux Terminal direction.
 3. **Read `DECISIONS.md`** — D1–D20. D19 (Linux Terminal pivot) and D20 (drop Magisk) are the latest.
 4. **Check `git log --oneline -20`** — see what's been committed.

@@ -18,11 +18,11 @@ Each entry: what was picked, what was rejected, why. Future sessions read this t
 **Why:** Bundled credits likely violate Anthropic's ToS (unattributed automated use), create ongoing liability (per-device cost forever), and couple device sales to API economics.
 **Tradeoff:** Buyer needs an Anthropic account. Wizard links to `claude.ai` signup if they don't have one.
 
-## D3 — Ship under "DevBox" despite TM risk
+## D3 — Ship under "Codefone" despite TM risk
 
-**Pick:** Ship v0 as "DevBox", flag the Microsoft Azure Dev Box trademark concern, make rename cheap (~15 min grep/replace).
+**Pick:** Ship v0 as "Codefone", flag the Microsoft Azure Dev Box trademark concern, make rename cheap (~15 min grep/replace).
 **Rejected:** Rename to Loom / Anvil / Kiln upfront.
-**Why:** Joe chose DevBox. Brand appears only in user-facing docs, not in file paths or scripts. Risk is managed in `BRAND-RISK.md`.
+**Why:** Joe chose Codefone. Brand appears only in user-facing docs, not in file paths or scripts. Risk is managed in `BRAND-RISK.md`.
 
 ## D4 — Termux from F-Droid, not Play Store
 
@@ -40,7 +40,7 @@ Each entry: what was picked, what was rejected, why. Future sessions read this t
 
 ## D6 — State sync offers both GitHub and Drive; wizard picks one
 
-**Pick:** Ship both `sync-github.sh` and `sync-drive.sh`. Wizard asks once, writes choice to `~/.devbox/sync-method`.
+**Pick:** Ship both `sync-github.sh` and `sync-drive.sh`. Wizard asks once, writes choice to `~/.codefone/sync-method`.
 **Rejected:** GitHub-only (devs like it, but some buyers don't have GitHub); both-simultaneously (double complexity for no benefit).
 **Why:** Joe picked "both, user decides" in the questionnaire.
 **Tradeoff:** Two code paths to maintain. Acceptable because each path is a ~50-line shell script.
@@ -50,7 +50,7 @@ Each entry: what was picked, what was rejected, why. Future sessions read this t
 **Pick:** `npm install -g @anthropic-ai/claude-code` in Termux.
 **Rejected:** Docker/podman in Termux; nix; pkgx.
 **Why:** Containers don't run natively in unrooted Termux (no user namespaces without proot-distro). npm global install is the official install path, is well-supported, and is a 30-second operation.
-**Tradeoff:** Updates are `npm update -g` — the user needs to run this occasionally. `wizard.sh` writes a `devbox update` alias that does it.
+**Tradeoff:** Updates are `npm update -g` — the user needs to run this occasionally. `wizard.sh` writes a `codefone update` alias that does it.
 
 ## D8 — Provision script is idempotent and re-runnable
 
@@ -65,7 +65,7 @@ Each entry: what was picked, what was rejected, why. Future sessions read this t
 
 **Pick:** `sync-github.sh` keeps the remote URL credential-free (`https://github.com/u/r.git`) and authenticates each git operation with a chmod-600 credentials file consumed by `git -c credential.helper="store --file=..."`.
 **Rejected:** Embedding the PAT in origin's URL (the simpler path).
-**Why:** The embedded-URL pattern writes the token into `.git/config`, where any process inside Termux — including Claude Code itself, which has filesystem MCP access to the repo — can trivially exfiltrate it. Credential file in `$DEVBOX_HOME/git-credentials` with `chmod 600` limits the attack surface.
+**Why:** The embedded-URL pattern writes the token into `.git/config`, where any process inside Termux — including Claude Code itself, which has filesystem MCP access to the repo — can trivially exfiltrate it. Credential file in `$CODEFONE_HOME/git-credentials` with `chmod 600` limits the attack surface.
 **Tradeoff:** Slightly more complex sync code. Worth it for a device that's explicitly marketed as a "sandbox the agent can't escape from" — a readable PAT would make that promise a lie.
 
 ## D10 — GitHub sync refuses to push to a public repo
@@ -83,8 +83,8 @@ Each entry: what was picked, what was rejected, why. Future sessions read this t
 ## D12 — Google Drive sync uses drive.file, not full Drive access
 
 **Pick:** rclone setup guides the buyer to scope 3 (drive.file — files rclone creates only).
-**Rejected:** scope 1 (Full access — DevBox can see every file in the buyer's Drive).
-**Why:** DevBox only needs to read/write its own backup folder. Full-drive access violates least-privilege and would let a compromised agent enumerate the buyer's entire Google Drive. drive.file limits exposure to the DevBox backup folder only.
+**Rejected:** scope 1 (Full access — Codefone can see every file in the buyer's Drive).
+**Why:** Codefone only needs to read/write its own backup folder. Full-drive access violates least-privilege and would let a compromised agent enumerate the buyer's entire Google Drive. drive.file limits exposure to the Codefone backup folder only.
 **Tradeoff:** If the buyer wants to pull existing Drive files onto the device, they'd need a wider scope. For v0, that's a feature we're not offering.
 
 ## D13 — Filesystem MCP install is install-fatal; github / fetch MCPs are warn-only
@@ -103,7 +103,7 @@ Each entry: what was picked, what was rejected, why. Future sessions read this t
 
 ## D15 — Pivot from LineageOS back to stock Android (2026-04-17)
 
-**Pick:** Ship DevBox on **stock Android**, not LineageOS. On Pixel-class devices with unlockable bootloaders, add Magisk root as an additive feature.
+**Pick:** Ship Codefone on **stock Android**, not LineageOS. On Pixel-class devices with unlockable bootloaders, add Magisk root as an additive feature.
 **Rejected:** LineageOS as the default OS (the original v0.1 direction).
 **Why:** LineageOS was picked for "isolation / no Google services." In practice on Pixel 8:
 - **Broken UX debts:** no TTS engine ships by default, several voice input paths fail on Android 16 (`termux-speech-to-text` BadTokenException), Signal 11 Termux crashes observed.
@@ -122,7 +122,7 @@ Stock Android with bloatware stripped + optional Magisk root gives root-where-we
 
 ## D17 — Magisk root is best-effort and additive; never required
 
-**Pick:** Magisk root is installed on devices that can be unlocked (Pixels, unlocked Samsungs). Path B devices (carrier-locked Samsungs) ship without root. All DevBox core features (Claude Code, Termux, SSH, sync) must work without root. Root unlocks *additional* features (hardened kiosk mode, systemless hosts blocklist).
+**Pick:** Magisk root is installed on devices that can be unlocked (Pixels, unlocked Samsungs). Path B devices (carrier-locked Samsungs) ship without root. All Codefone core features (Claude Code, Termux, SSH, sync) must work without root. Root unlocks *additional* features (hardened kiosk mode, systemless hosts blocklist).
 **Rejected:** "Rooted devices only" as a product positioning (excludes carrier-locked resale stock). Requiring root for any core feature.
 **Why:** The S20 FE (Verizon) has a permanently locked bootloader. Joe's cousin's inventory includes many such devices. Making root a requirement would cut our addressable supply dramatically. And practically, Termux + Claude Code on unrooted stock Android is indistinguishable from the rooted experience for 95% of coding work.
 **Tradeoff:** Two device paths to document and QA. Acceptable because Path A and Path B converge at step 2 (Termux provisioning) — they only differ in the initial flashing step.
@@ -144,12 +144,12 @@ Stock Android with bloatware stripped + optional Magisk root gives root-where-we
 **Tradeoff:**
 - **Pixel-only.** Samsung (and any non-Pixel Android 15+ device without the AVF Terminal) stays on the Termux path as legacy. Google is expected to broaden AVF Terminal support in late 2026.
 - **VM overhead.** 565 MB rootfs + ~1 GB RAM floor. Acceptable on an 8 GB Pixel 8.
-- **"Preparing terminal" hang quirk.** The VM can wedge when the screen locks mid-session. Fix: force-stop + relaunch. Product mitigation: ship a `devbox revive` one-tap script.
+- **"Preparing terminal" hang quirk.** The VM can wedge when the screen locks mid-session. Fix: force-stop + relaunch. Product mitigation: ship a `codefone revive` one-tap script.
 - **No Termux add-ons** (Termux:Boot autostart, Termux:API for Android intents). We lose boot-time autostart but gain a real Linux userland. Net positive for a coding agent; neutral for device-integration features we weren't using anyway.
 
-## D20 — Drop Magisk root from DevBox's core requirements (2026-04-17)
+## D20 — Drop Magisk root from Codefone's core requirements (2026-04-17)
 
-**Pick:** Ship DevBox on **pure stock Android**, no root. Magisk is neither required nor recommended.
+**Pick:** Ship Codefone on **pure stock Android**, no root. Magisk is neither required nor recommended.
 **Rejected:** Magisk root as an additive feature (D17).
 **Why:** The original motivation for root was (a) "run Claude Code with full system access" and (b) kiosk-mode launcher replacement. (a) is solved more cleanly by the Linux Terminal VM — `droid` has full root inside the Debian guest with zero Android-side privilege. (b) turns out to not need root on modern Android (launcher default + Screen Pinning cover the UX). Meanwhile, Magisk on Pixel has a recurring failure mode: Android auto-applies OTAs to the inactive slot, and when the device reboots into that slot, root is silently gone (init_boot reverted to stock). Observed firsthand on our test unit — an OTA to `CP1A.260305.018` flipped the phone from rooted slot B to clean slot A with no warning, making the Magisk app show "Installed: N/A." A product that buyers expect to "just work" cannot have root silently break on a monthly cadence.
 **Tradeoff:**

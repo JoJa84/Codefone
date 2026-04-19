@@ -1,5 +1,5 @@
 {
-  "_comment": "Reference MCP config for DevBox. wizard.sh registers these via 'claude mcp add' commands at first boot — this file is documentation, not directly consumed by Claude Code. Paths assume Termux layout on Android.",
+  "_comment": "Reference MCP config for Codefone. wizard.sh registers these via 'claude mcp add' commands at first boot — this file is documentation, not directly consumed by Claude Code. Paths assume Termux layout on Android.",
   "_termux_prefix": "/data/data/com.termux/files/usr",
   "_home": "/data/data/com.termux/files/home",
 
@@ -24,14 +24,14 @@
     },
 
     "github": {
-      "description": "GitHub API (issues, PRs, repo ops). Requires a Personal Access Token stored in ~/.devbox/github-token.",
+      "description": "GitHub API (issues, PRs, repo ops). Requires a Personal Access Token stored in ~/.codefone/github-token.",
       "command": "npx",
       "args": [
         "-y",
         "@modelcontextprotocol/server-github"
       ],
       "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "<populated by wizard.sh from ~/.devbox/github-token>"
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "<populated by wizard.sh from ~/.codefone/github-token>"
       }
     },
 

@@ -1,6 +1,6 @@
-# DevBox
+# Codefone
 
-> © 2026 Joe Jajati. "DevBox" is a trademark of Joe Jajati.
+> © 2026 Joe Jajati. "Codefone" is a trademark of Joe Jajati.
 > Source available under PolyForm Noncommercial 1.0.0 — free for personal and non-commercial use.
 > Commercial use requires a separate license. Contact joe@hx2o.com.
 
@@ -27,7 +27,7 @@ That last one is new, hiding in Developer Options, and I think almost nobody's r
 
 You enable it. You run `curl -fsSL https://claude.ai/install.sh | bash`. You sign in. You now have **Claude Code, natively, in your pocket**. No Termux hacks. No custom ROM. No root. No cloud relay. No Telegram duct tape.
 
-A month ago, the cheapest respectable "AI coding rig" was a mini-PC, a Framework, or a used ThinkPad — call it $600–$3,000. DevBox is a $100 phone that fits in your jeans.
+A month ago, the cheapest respectable "AI coding rig" was a mini-PC, a Framework, or a used ThinkPad — call it $600–$3,000. Codefone is a $100 phone that fits in your jeans.
 
 ## And here's the part that got me out of bed
 
@@ -108,7 +108,7 @@ That's it. Full docs in [FLASH.md](FLASH.md) and [DECISIONS.md](DECISIONS.md).
 
 | File | What it does |
 | --- | --- |
-| [`FLASH.md`](FLASH.md) | Step-by-step Pixel → DevBox |
+| [`FLASH.md`](FLASH.md) | Step-by-step Pixel → Codefone |
 | [`SCOPE.md`](SCOPE.md) | What's in v0.2, what's not |
 | [`DECISIONS.md`](DECISIONS.md) | Build-time tradeoffs and why (D1–D20) |
 | [`kiosk-setup.md`](kiosk-setup.md) | Screen-pin + hide apps for single-purpose feel |
@@ -135,23 +135,25 @@ That's it. Full docs in [FLASH.md](FLASH.md) and [DECISIONS.md](DECISIONS.md).
 **v0.2 — Pixel 8 reference build shipping.**
 Stock Android 16 + Linux Terminal VM + Claude Code 2.1.113 native + SSH + PC access, all confirmed on a live unit.
 
-Next up: a `devbox revive` script for the AVF wedge, MCP wiring inside the VM, maybe a small production run.
+Next up: a `codefone revive` script for the AVF wedge, MCP wiring inside the VM, maybe a small production run.
 
 ## I'd love help with
 
 I'm a hobbyist, not a developer. If you see things in this repo that are wrong, short-sighted, or way less ambitious than they should be — please open an issue or a PR. In particular:
 
 - **USB-C peripheral passthrough into the AVF guest** — how deep can we go? OBD-II readers, serial consoles, flash programmers, audio/video capture?
-- **VM images as product** — what does a "DevBox image for HVAC techs" or "DevBox image for network admins" actually contain?
+- **VM images as product** — what does a "Codefone image for HVAC techs" or "Codefone image for network admins" actually contain?
 - **Security model** — where are the cracks in isolating the guest from the host's contacts/photos/etc.?
 - **Older Pixels / other OEMs** — any clean way to backport this to pre-AVF hardware?
 
-If any of that interests you, say hi.
+If any of that interests you, say hi. See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR — you'll be asked to sign a short CLA.
 
-## License
+## License & Trademarks
 
-PolyForm Noncommercial 1.0.0 — free for personal and non-commercial use.
+**Code:** PolyForm Noncommercial 1.0.0 — free for personal and non-commercial use. See [LICENSE](LICENSE).
 Commercial use (including selling products or devices based on this code) requires a separate commercial license. Contact joe@hx2o.com.
+
+**Name & logo:** "Codefone" is a trademark of Joe Jajati. A copyright license to the code is **not** a license to use the Codefone name. See [TRADEMARKS.md](TRADEMARKS.md) for what's allowed without asking, and what isn't.
 
 ---
 

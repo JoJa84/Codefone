@@ -1,4 +1,4 @@
-# reflash-to-stock.md — DevBox recovery to stock Android
+# reflash-to-stock.md — Codefone recovery to stock Android
 
 Safety net. If a buyer returns a device, or provisioning goes sideways, this restores the phone to a clean state so your cousin can sell it as a normal refurb.
 
@@ -9,17 +9,17 @@ Pick the path based on (a) the device family and (b) how broken things are.
 
 ---
 
-## Path A — Soft reset (preserves Android, wipes DevBox only)
+## Path A — Soft reset (preserves Android, wipes Codefone only)
 
 **Works on:** any device.
-**Use when:** the phone still boots normally and you just want to remove DevBox software.
+**Use when:** the phone still boots normally and you just want to remove Codefone software.
 
 1. Open Termux.
 2. Run:
    ```
    pkg uninstall -y nodejs-lts python rclone termux-api
-   rm -rf $HOME/.devbox $HOME/projects $HOME/.claude
-   rm -f $PREFIX/bin/devbox
+   rm -rf $HOME/.codefone $HOME/projects $HOME/.claude
+   rm -f $PREFIX/bin/codefone
    ```
 3. Uninstall Termux itself via Settings → Apps → Termux → Uninstall. Also Termux:Boot, Termux:API.
 4. Factory reset: Settings → General management (Samsung) / System (Pixel) → Reset → Factory data reset.
@@ -28,7 +28,7 @@ After step 4, the phone is indistinguishable from a fresh refurb.
 
 ---
 
-## Path B — Factory reset via Recovery (fastest, works even if DevBox is broken)
+## Path B — Factory reset via Recovery (fastest, works even if Codefone is broken)
 
 **Works on:** any device.
 **Use when:** Termux won't open or provisioning got stuck.
@@ -79,9 +79,9 @@ Phone boots to Android's welcome screen, clean. Note: this preserves Magisk root
    - Force Flash all Partitions: ✅ ON
    - Skip Secondary: ❌ OFF (flash both slots)
 7. Click Install, approve USB permission, wait ~15 min.
-8. Phone reboots into fresh Android 16 setup. No root, no Magisk, no DevBox.
+8. Phone reboots into fresh Android 16 setup. No root, no Magisk, no Codefone.
 
-**Lock Bootloader caveat:** Re-locking the bootloader on a device that has Magisk installed **will brick it** — the bootloader won't accept the Magisk-modified `init_boot.img` signature. Sequence matters: flash stock (step 7) first, which overwrites `init_boot` with a signed stock image, THEN re-lock if desired. If you re-lock in the same flash as wiping DevBox, Flash Tool does this correctly — the wipe+flash happens before the lock command.
+**Lock Bootloader caveat:** Re-locking the bootloader on a device that has Magisk installed **will brick it** — the bootloader won't accept the Magisk-modified `init_boot.img` signature. Sequence matters: flash stock (step 7) first, which overwrites `init_boot` with a signed stock image, THEN re-lock if desired. If you re-lock in the same flash as wiping Codefone, Flash Tool does this correctly — the wipe+flash happens before the lock command.
 
 ---
 
@@ -89,14 +89,14 @@ Phone boots to Android's welcome screen, clean. Note: this preserves Magisk root
 
 | Path | Apps | User data | Android OS | Bootloader | Magisk/root | Knox |
 | --- | --- | --- | --- | --- | --- | --- |
-| A — soft | DevBox only | DevBox only | untouched | untouched | untouched | untouched |
+| A — soft | Codefone only | Codefone only | untouched | untouched | untouched | untouched |
 | B — factory | all | all | untouched | untouched | **untouched on Pixel** | untouched |
 | C — Odin (Samsung) | all | all | reflashed | restored | N/A | permanent if tripped |
 | D — Flash Tool (Pixel) | all | all | reflashed | optional relock | **removed** | N/A |
 
 ## When to use which
 
-- **Buyer just wants DevBox gone, phone back:** Path A (soft).
+- **Buyer just wants Codefone gone, phone back:** Path A (soft).
 - **Default for RMA / return, Samsung:** Path B (factory reset).
 - **Default for RMA / return, Pixel that needs to ship un-rooted:** Path D (Flash Tool).
 - **Samsung with Knox trip or deeper OS damage:** Path C (Odin).

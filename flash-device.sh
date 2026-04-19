@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# flash-device.sh — PC-side orchestrator for DevBox provisioning.
+# flash-device.sh — PC-side orchestrator for Codefone provisioning.
 #
 # Runs on the PC (macOS / Linux / Windows+WSL / Git Bash on Windows).
 # Requires: adb, curl, awk, grep.
@@ -9,7 +9,7 @@
 #   1. Verify ADB and a single connected device.
 #   2. Download latest Termux / Termux:Boot / Termux:API APKs from GitHub releases.
 #   3. Install them via adb.
-#   4. Push provision.sh, wizard.sh, sync scripts, config, recovery docs to /sdcard/Download/devbox/.
+#   4. Push provision.sh, wizard.sh, sync scripts, config, recovery docs to /sdcard/Download/codefone/.
 #   5. Print the final 3-line copy/paste for the human operator to run inside Termux.
 #
 # Does NOT run provision.sh remotely — Termux's shell isn't reachable from adb
@@ -20,7 +20,7 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 APK_DIR="${REPO_DIR}/apks"
-DEVICE_DIR="/sdcard/Download/devbox"
+DEVICE_DIR="/sdcard/Download/codefone"
 
 log()  { printf "\033[1;36m[flash]\033[0m %s\n" "$*"; }
 warn() { printf "\033[1;33m[flash:warn]\033[0m %s\n" "$*"; }
@@ -157,9 +157,9 @@ install_apk "termux.apk"      "com.termux"
 install_apk "termux-boot.apk" "com.termux.boot"
 install_apk "termux-api.apk"  "com.termux.api"
 
-# ─── Push DevBox files ──────────────────────────────────────────────────────
+# ─── Push Codefone files ──────────────────────────────────────────────────────
 
-log "Pushing DevBox files to device..."
+log "Pushing Codefone files to device..."
 adb -s "$device_serial" shell "mkdir -p $DEVICE_DIR" >/dev/null
 
 FILES=(
@@ -202,7 +202,7 @@ cat << 'FINAL_EOF'
 
   3. Then paste this and press Enter:
 
-        cp ~/storage/downloads/devbox/* ~/ && bash ~/provision.sh
+        cp ~/storage/downloads/codefone/* ~/ && bash ~/provision.sh
 
   4. When you see "Provisioning complete.", type:
 

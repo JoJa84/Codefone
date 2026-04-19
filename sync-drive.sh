@@ -2,12 +2,12 @@
 #
 # sync-drive.sh — backup-style sync of ~/projects to Google Drive via rclone.
 #
-# First run (with --setup): runs 'rclone config' to create a 'devbox-drive'
+# First run (with --setup): runs 'rclone config' to create a 'codefone-drive'
 #   remote. Google Drive requires a one-time OAuth in a browser. The user
 #   follows rclone's link, signs in, pastes back a token.
 #
 # Subsequent runs (no args): push-only. Copies ~/projects to
-#   Drive:devbox/projects. Deletes remote files no longer local.
+#   Drive:codefone/projects. Deletes remote files no longer local.
 #
 # Note: this is intentionally NOT a two-way sync. rclone bisync exists but is
 # beta-quality; for v0 we treat Drive as a backup target. If the user wants
@@ -15,10 +15,10 @@
 
 set -euo pipefail
 
-DEVBOX_HOME="$HOME/.devbox"
+CODEFONE_HOME="$HOME/.codefone"
 PROJECTS_DIR="$HOME/projects"
-REMOTE_NAME="devbox-drive"
-REMOTE_PATH="${REMOTE_NAME}:devbox/projects"
+REMOTE_NAME="codefone-drive"
+REMOTE_PATH="${REMOTE_NAME}:codefone/projects"
 
 log()  { printf "\033[1;36m[sync:drive]\033[0m %s\n" "$*"; }
 warn() { printf "\033[1;33m[sync:drive:warn]\033[0m %s\n" "$*"; }
@@ -44,8 +44,8 @@ setup() {
             rclone config delete "${REMOTE_NAME}"
         else
             log "Keeping existing config."
-            mkdir -p "$DEVBOX_HOME"
-            touch "$DEVBOX_HOME/drive-configured"
+            mkdir -p "$CODEFONE_HOME"
+            touch "$CODEFONE_HOME/drive-configured"
             return 0
         fi
     fi
@@ -55,12 +55,12 @@ setup() {
   rclone will now ask you a series of questions. Answer as follows:
 
     n) New remote
-    name> devbox-drive
+    name> codefone-drive
     Storage> drive      (or type 'drive' and pick the number it shows)
     client_id> (leave blank, press Enter)
     client_secret> (leave blank, press Enter)
     scope> 3            (drive.file — files rclone creates only;
-                         DevBox cannot read your existing Drive files,
+                         Codefone cannot read your existing Drive files,
                          only the ones it writes to its own folder)
     service_account_file> (leave blank, press Enter)
     Edit advanced config> n
@@ -68,13 +68,13 @@ setup() {
     ...then open the URL it prints, sign in with Google, and paste
     the code it gives you back into rclone.
     Configure as Shared Drive> n
-    Keep this 'devbox-drive' remote> y
+    Keep this 'codefone-drive' remote> y
     q) Quit config
 
-  When you see the 'Current remotes:' list with devbox-drive in it,
+  When you see the 'Current remotes:' list with codefone-drive in it,
   choose 'q' to quit.
 
-  Why scope 3 (drive.file)? DevBox only needs to read/write its own
+  Why scope 3 (drive.file)? Codefone only needs to read/write its own
   backup folder. Scope 1 (Full access) would let rclone — and anything
   with access to this device — read your entire Google Drive. We pick
   the minimum permission that gets the job done.
@@ -87,12 +87,12 @@ SETUP_EOF
     rclone config
 
     if rclone listremotes 2>/dev/null | grep -q "^${REMOTE_NAME}:"; then
-        mkdir -p "$DEVBOX_HOME"
-        touch "$DEVBOX_HOME/drive-configured"
+        mkdir -p "$CODEFONE_HOME"
+        touch "$CODEFONE_HOME/drive-configured"
         log "Drive sync configured."
         log "  Remote: ${REMOTE_NAME}"
-        log "  Target: Drive:devbox/projects"
-        log "  Run 'devbox sync' any time to push changes."
+        log "  Target: Drive:codefone/projects"
+        log "  Run 'codefone sync' any time to push changes."
     else
         err "Drive remote not created. Re-run: bash $0 --setup"
         return 1

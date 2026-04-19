@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
 #
-# DevBox wizard.sh — first-boot interactive setup.
+# Codefone wizard.sh — first-boot interactive setup.
 #
 # Runs after provision.sh has completed. Walks the buyer through:
 #   1. Internet check
@@ -15,8 +15,8 @@
 
 set -euo pipefail
 
-DEVBOX_HOME="$HOME/.devbox"
-mkdir -p "$DEVBOX_HOME"
+CODEFONE_HOME="$HOME/.codefone"
+mkdir -p "$CODEFONE_HOME"
 
 # ─── Style ──────────────────────────────────────────────────────────────────
 
@@ -59,10 +59,10 @@ pause() {
 RECONFIGURE=0
 if [ "${1:-}" = "--reconfigure" ]; then
     RECONFIGURE=1
-    rm -f "$DEVBOX_HOME/wizard-done"
+    rm -f "$CODEFONE_HOME/wizard-done"
 fi
 
-if [ -f "$DEVBOX_HOME/wizard-done" ] && [ "$RECONFIGURE" = "0" ]; then
+if [ -f "$CODEFONE_HOME/wizard-done" ] && [ "$RECONFIGURE" = "0" ]; then
     # Already done. Fall through to claude launch silently.
     exec claude
 fi
@@ -97,7 +97,7 @@ check_internet() {
 if check_internet; then
     ok "Connected."
 else
-    err "No internet. Open Settings → WiFi to connect, then re-run: devbox wizard"
+    err "No internet. Open Settings → WiFi to connect, then re-run: codefone wizard"
     exit 1
 fi
 
@@ -151,9 +151,9 @@ ask "Pick 1, 2, or 3:"
 read -r kbd_choice
 
 case "$kbd_choice" in
-    1) echo "voice" > "$DEVBOX_HOME/keyboard-mode"; ok "Saved: voice-first." ;;
-    2) echo "bt-keyboard" > "$DEVBOX_HOME/keyboard-mode"; ok "Saved: Bluetooth keyboard." ;;
-    *) echo "both" > "$DEVBOX_HOME/keyboard-mode"; ok "Saved: both." ;;
+    1) echo "voice" > "$CODEFONE_HOME/keyboard-mode"; ok "Saved: voice-first." ;;
+    2) echo "bt-keyboard" > "$CODEFONE_HOME/keyboard-mode"; ok "Saved: Bluetooth keyboard." ;;
+    *) echo "both" > "$CODEFONE_HOME/keyboard-mode"; ok "Saved: both." ;;
 esac
 
 # ─── Step 4: Sync method ────────────────────────────────────────────────────
@@ -174,7 +174,7 @@ cat << 'SYNC_EOF'
         Uses rclone. One-way backup (phone → Drive).
         Pick this if you don't want GitHub.
   [3] Skip for now
-        Set up later with 'devbox wizard --reconfigure'.
+        Set up later with 'codefone wizard --reconfigure'.
 
 SYNC_EOF
 ask "Pick 1, 2, or 3:"
@@ -182,32 +182,32 @@ read -r sync_choice
 
 case "$sync_choice" in
     1)
-        echo "github" > "$DEVBOX_HOME/sync-method"
+        echo "github" > "$CODEFONE_HOME/sync-method"
         ok "Saved: GitHub sync."
-        if [ -f "$DEVBOX_HOME/sync-github.sh" ]; then
+        if [ -f "$CODEFONE_HOME/sync-github.sh" ]; then
             ask "Set up GitHub now? (y/N)"
             read -r setup_now
             if [ "${setup_now,,}" = "y" ]; then
-                bash "$DEVBOX_HOME/sync-github.sh" --setup || \
-                    warn "GitHub setup did not complete. Run it later with 'devbox sync'."
+                bash "$CODEFONE_HOME/sync-github.sh" --setup || \
+                    warn "GitHub setup did not complete. Run it later with 'codefone sync'."
             fi
         fi
         ;;
     2)
-        echo "drive" > "$DEVBOX_HOME/sync-method"
+        echo "drive" > "$CODEFONE_HOME/sync-method"
         ok "Saved: Google Drive sync."
-        if [ -f "$DEVBOX_HOME/sync-drive.sh" ]; then
+        if [ -f "$CODEFONE_HOME/sync-drive.sh" ]; then
             ask "Set up Drive now? (y/N)"
             read -r setup_now
             if [ "${setup_now,,}" = "y" ]; then
-                bash "$DEVBOX_HOME/sync-drive.sh" --setup || \
-                    warn "Drive setup did not complete. Run it later with 'devbox sync'."
+                bash "$CODEFONE_HOME/sync-drive.sh" --setup || \
+                    warn "Drive setup did not complete. Run it later with 'codefone sync'."
             fi
         fi
         ;;
     *)
-        echo "none" > "$DEVBOX_HOME/sync-method"
-        ok "Skipped sync. Configure later with 'devbox wizard --reconfigure'."
+        echo "none" > "$CODEFONE_HOME/sync-method"
+        ok "Skipped sync. Configure later with 'codefone wizard --reconfigure'."
         ;;
 esac
 
@@ -253,13 +253,13 @@ add_mcp git        -- python -m mcp_server_git
 add_mcp fetch      -- python -m mcp_server_fetch
 
 # GitHub MCP needs a token — only wire it if sync-github.sh wrote one.
-if [ -f "$DEVBOX_HOME/github-token" ]; then
-    GH_TOKEN=$(cat "$DEVBOX_HOME/github-token")
+if [ -f "$CODEFONE_HOME/github-token" ]; then
+    GH_TOKEN=$(cat "$CODEFONE_HOME/github-token")
     add_mcp_with_env github \
         "GITHUB_PERSONAL_ACCESS_TOKEN=${GH_TOKEN}" \
         -- npx -y @modelcontextprotocol/server-github
 else
-    warn "GitHub MCP skipped (no token). Set up later with 'devbox wizard --reconfigure'."
+    warn "GitHub MCP skipped (no token). Set up later with 'codefone wizard --reconfigure'."
 fi
 
 # ─── Step 6: Screen Pinning reminder ────────────────────────────────────────
@@ -283,8 +283,8 @@ pause
 
 # ─── Done ───────────────────────────────────────────────────────────────────
 
-touch "$DEVBOX_HOME/wizard-done"
-date -u +"%Y-%m-%dT%H:%M:%SZ" > "$DEVBOX_HOME/wizard-done"
+touch "$CODEFONE_HOME/wizard-done"
+date -u +"%Y-%m-%dT%H:%M:%SZ" > "$CODEFONE_HOME/wizard-done"
 
 banner
 cat << 'DONE_EOF'
@@ -294,9 +294,9 @@ cat << 'DONE_EOF'
   Launching Claude Code now. Type your first prompt and go.
 
   Tips:
-    • 'devbox status'  — check installed versions and config
-    • 'devbox sync'    — push/pull state on demand
-    • 'devbox wizard --reconfigure' — change any setting above
+    • 'codefone status'  — check installed versions and config
+    • 'codefone sync'    — push/pull state on demand
+    • 'codefone wizard --reconfigure' — change any setting above
     • Exit Claude Code with Ctrl+C, then 'exit' to close Termux.
 
 DONE_EOF

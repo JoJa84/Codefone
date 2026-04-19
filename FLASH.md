@@ -1,6 +1,6 @@
 # FLASH.md — Cousin's step-by-step
 
-**Goal:** turn a Pixel 8+ into a DevBox in 15–20 minutes.
+**Goal:** turn a Pixel 8+ into a Codefone in 15–20 minutes.
 
 **Two device paths**:
 
@@ -148,11 +148,11 @@ Settings → General management → Reset → Factory data reset. Confirm. Phone
 
 ### B4. Strip Samsung / Verizon bloatware (~5 min)
 
-Run `adb shell pm uninstall --user 0 <package>` per the curated list in `R:\Downloads\Delete Later\devbox-s20-apks\bloat-list.txt`. This disables bloat for user 0 without root — reversible by factory reset.
+Run `adb shell pm uninstall --user 0 <package>` per the curated list in `R:\Downloads\Delete Later\codefone-s20-apks\bloat-list.txt`. This disables bloat for user 0 without root — reversible by factory reset.
 
 **Do NOT uninstall:** `com.android.*`, `com.google.android.gms`, `com.google.android.gsf`, `com.samsung.android.keyscafe` (keyboard), or anything starting with `com.sec.android.inputmethod`.
 
-### B5. Install Termux + DevBox scripts
+### B5. Install Termux + Codefone scripts
 
 From repo root on PC:
 ```bash
@@ -164,7 +164,7 @@ bash flash-device.sh
 On phone in Termux:
 ```
 termux-setup-storage   # tap Allow
-cp ~/storage/downloads/devbox/* ~/
+cp ~/storage/downloads/codefone/* ~/
 bash ~/provision.sh
 ```
 
@@ -211,7 +211,7 @@ This is Android's standard A/B behavior — OTAs apply to the inactive slot, and
 - Bundled APKs in-repo (we download latest at flash time).
 - Automated bloatware-stripper for Path B (`strip-bloat-s20.sh` is a todo).
 - Branded bootscreen / splash screen — stock Android boot.
-- `devbox revive` one-tap VM recovery script.
+- `codefone revive` one-tap VM recovery script.
 - First-boot wizard inside the Debian VM (currently manual).
 
 See `HANDOFF.md` for live status.

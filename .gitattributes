@@ -1,4 +1,4 @@
-# DevBox scripts run on Termux (Android). Force LF line endings so CRLF
+# Codefone scripts run on Termux (Android). Force LF line endings so CRLF
 # from a Windows checkout doesn't break the shebang line.
 *.sh text eol=lf
 *.json text eol=lf

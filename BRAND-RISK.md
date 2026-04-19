@@ -1,4 +1,4 @@
-# BRAND-RISK — "DevBox" trademark considerations
+# BRAND-RISK — "Codefone" trademark considerations
 
 ## The issue
 
@@ -15,9 +15,9 @@ Microsoft operates **Microsoft Dev Box** (Azure cloud developer workstation serv
 - Taglines or descriptions that echo Microsoft's product page copy.
 - Use of "Dev Box" as two words (matches Microsoft's usage exactly).
 
-## Mitigations if we keep DevBox
+## Mitigations if we keep Codefone
 
-1. **Compound name:** "DevBox Mobile" / "PocketDevBox" reads distinct enough to dodge most collisions.
+1. **Compound name:** "Codefone Mobile" / "PocketCodefone" reads distinct enough to dodge most collisions.
 2. **Visual distinction:** dark, minimal palette. No Microsoft-adjacent iconography.
 3. **Description distance:** describe as "a refurbished Android phone with Claude Code preinstalled," not as "a dev box."
 4. **Trademark search before 100 units:** if volume grows, pay a lawyer for a USPTO search. $300–$800.
@@ -34,4 +34,4 @@ Rename cost if we switch: ~15 min grep/replace across docs. No script or file pa
 
 ## Decision
 
-Ship v0 beta under "DevBox." Monitor. Rename cheaply if signals turn.
+Ship v0 beta under "Codefone." Monitor. Rename cheaply if signals turn.

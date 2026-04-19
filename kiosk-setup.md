@@ -1,6 +1,6 @@
-# kiosk-setup.md — Lockdown options for DevBox
+# kiosk-setup.md — Lockdown options for Codefone
 
-v0 positions DevBox as a **developer sandbox**, not a consumer appliance. The point is *isolation from the buyer's main machine*, not *lockdown of this device*. The buyer owns it and should be able to unlock / reset / reflash it freely.
+v0 positions Codefone as a **developer sandbox**, not a consumer appliance. The point is *isolation from the buyer's main machine*, not *lockdown of this device*. The buyer owns it and should be able to unlock / reset / reflash it freely.
 
 That said, a kiosk-like experience makes the out-of-box flow cleaner. Two paths, pick per device.
 
@@ -16,7 +16,7 @@ Android's built-in Screen Pinning locks the phone to one app until you enter the
 
 1. Settings → Biometrics and security → Other security settings → Pin windows → **On**
 2. Enable "Ask for PIN before unpinning"
-3. Open Termux (the DevBox app). Tap the overview / recents button.
+3. Open Termux (the Codefone app). Tap the overview / recents button.
 4. Long-press the Termux card → **Pin this app**.
 
 To escape: hold Back + Overview → enter PIN.
@@ -57,7 +57,7 @@ Stock Samsung One UI launcher is fine. Third-party launchers (Nova, Lawnchair) g
 **Lockdown level:** High — user cannot escape without a root-level reset.
 **Availability:** Only on devices with Magisk root (Path A in `FLASH.md`). Carrier-locked Samsungs cannot do this.
 
-Since DevBox v0.2 ships with Magisk root on Pixels, hardened kiosk mode is now a real option rather than a v1 aspiration. Optional for the v0.2 beta cohort, recommended for any buyer asking for "ChromeOS-style single-purpose phone."
+Since Codefone v0.2 ships with Magisk root on Pixels, hardened kiosk mode is now a real option rather than a v1 aspiration. Optional for the v0.2 beta cohort, recommended for any buyer asking for "ChromeOS-style single-purpose phone."
 
 ### Steps
 
@@ -72,11 +72,11 @@ Since DevBox v0.2 ships with Magisk root on Pixels, hardened kiosk mode is now a
 
 ### Escape path
 
-If the buyer ever gets locked out (forgot kiosk PIN): power off → Vol Down + Power to bootloader → recovery → wipe data. They lose their DevBox work but the phone recovers. Document this prominently on the shipping card.
+If the buyer ever gets locked out (forgot kiosk PIN): power off → Vol Down + Power to bootloader → recovery → wipe data. They lose their Codefone work but the phone recovers. Document this prominently on the shipping card.
 
 ### Knox caveat (Samsung-specific)
 
-Samsung's eFuse (Knox bit) trips the moment you unlock the bootloader. Knox-dependent features (Samsung Pay, Secure Folder, work profiles) are permanently disabled. For an unlocked Samsung DevBox this is fine — we're not positioning it as a stock daily driver. Pixel devices do not have a Knox equivalent; unlocking is a clean "yellow banner on boot" with no hidden cost.
+Samsung's eFuse (Knox bit) trips the moment you unlock the bootloader. Knox-dependent features (Samsung Pay, Secure Folder, work profiles) are permanently disabled. For an unlocked Samsung Codefone this is fine — we're not positioning it as a stock daily driver. Pixel devices do not have a Knox equivalent; unlocking is a clean "yellow banner on boot" with no hidden cost.
 
 ---
 
@@ -84,6 +84,6 @@ Samsung's eFuse (Knox bit) trips the moment you unlock the bootloader. Knox-depe
 
 For the 20-unit beta: **Path A**. Ship with a sticker on the box that reads:
 
-> "This is a developer sandbox. It runs on stock Samsung software with Claude Code preinstalled. To reset it, see `devbox reflash`."
+> "This is a developer sandbox. It runs on stock Samsung software with Claude Code preinstalled. To reset it, see `codefone reflash`."
 
 That matches the positioning. Anyone who wants a truly locked-down kiosk isn't in our ICP for v0.

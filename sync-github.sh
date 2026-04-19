@@ -16,11 +16,11 @@
 
 set -euo pipefail
 
-DEVBOX_HOME="$HOME/.devbox"
+CODEFONE_HOME="$HOME/.codefone"
 PROJECTS_DIR="$HOME/projects"
-TOKEN_FILE="$DEVBOX_HOME/github-token"
-CRED_FILE="$DEVBOX_HOME/git-credentials"
-CONFIG_FILE="$DEVBOX_HOME/github-sync.conf"
+TOKEN_FILE="$CODEFONE_HOME/github-token"
+CRED_FILE="$CODEFONE_HOME/git-credentials"
+CONFIG_FILE="$CODEFONE_HOME/github-sync.conf"
 
 log()  { printf "\033[1;36m[sync:gh]\033[0m %s\n" "$*"; }
 warn() { printf "\033[1;33m[sync:gh:warn]\033[0m %s\n" "$*"; }
@@ -33,7 +33,7 @@ write_credentials() {
     # Write https://USER:TOKEN@github.com to a chmod-600 file so git's
     # store helper can read it. URL is never placed in .git/config or CLI args.
     local user="$1" token="$2"
-    mkdir -p "$DEVBOX_HOME"
+    mkdir -p "$CODEFONE_HOME"
     umask 077
     printf "https://%s:%s@github.com\n" "$user" "$token" > "$CRED_FILE"
     chmod 600 "$CRED_FILE"
@@ -69,7 +69,7 @@ api_create_private_repo() {
     response=$(curl -s -w "\n%{http_code}" -X POST \
         -H "Authorization: token $token" \
         -H "Content-Type: application/json" \
-        -d "{\"name\":\"$repo\",\"private\":true,\"description\":\"DevBox project sync\"}" \
+        -d "{\"name\":\"$repo\",\"private\":true,\"description\":\"Codefone project sync\"}" \
         https://api.github.com/user/repos)
     http=$(printf "%s" "$response" | tail -n1)
     if [ "$http" != "201" ]; then
@@ -97,9 +97,9 @@ setup() {
     [ -z "$GH_USER" ] && die "Username required."
 
     # Repo name
-    printf "Repo name for your DevBox projects [devbox-projects]: "
+    printf "Repo name for your Codefone projects [codefone-projects]: "
     read -r input
-    GH_REPO="${input:-devbox-projects}"
+    GH_REPO="${input:-codefone-projects}"
 
     # PAT
     echo
@@ -137,7 +137,7 @@ TOKEN_EOF
     fi
 
     # Save non-secret config
-    mkdir -p "$DEVBOX_HOME"
+    mkdir -p "$CODEFONE_HOME"
     umask 077
     cat > "$CONFIG_FILE" << CONF_EOF
 GH_USER="$GH_USER"
@@ -192,14 +192,14 @@ CONF_EOF
 
         if [ -z "$(ls -A .)" ]; then
             cat > README.md << README_EOF
-# DevBox projects
+# Codefone projects
 
-Synced from a DevBox device. Each subfolder is a project.
+Synced from a Codefone device. Each subfolder is a project.
 README_EOF
         fi
 
         git add -A
-        git commit -m "Initial DevBox sync" >/dev/null
+        git commit -m "Initial Codefone sync" >/dev/null
     fi
 
     # Remote URL is credential-free; git uses the helper for auth.
@@ -218,7 +218,7 @@ README_EOF
     log "GitHub sync configured."
     log "  Repo: https://github.com/$GH_USER/$GH_REPO (private)"
     log "  Token stored: $TOKEN_FILE (chmod 600)"
-    log "  Run 'devbox sync' any time to push changes."
+    log "  Run 'codefone sync' any time to push changes."
 }
 
 # ─── Push / pull flow ───────────────────────────────────────────────────────
@@ -248,14 +248,14 @@ sync_push_pull() {
     if [ -n "$changes" ]; then
         log "Committing local changes..."
         git add -A
-        git commit -m "devbox sync $(date -u +%Y-%m-%dT%H:%M:%SZ)" >/dev/null
+        git commit -m "codefone sync $(date -u +%Y-%m-%dT%H:%M:%SZ)" >/dev/null
     else
         log "No local changes."
     fi
 
     log "Pulling remote..."
     if ! git_auth pull --rebase --autostash origin main 2>&1 | grep -v "^From\|^remote:"; then
-        die "Pull failed. Resolve conflicts in $PROJECTS_DIR and re-run 'devbox sync'."
+        die "Pull failed. Resolve conflicts in $PROJECTS_DIR and re-run 'codefone sync'."
     fi
 
     log "Pushing..."
