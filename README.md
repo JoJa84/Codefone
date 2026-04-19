@@ -1,5 +1,9 @@
 # DevBox
 
+> © 2026 Joe Jajati. "DevBox" is a trademark of Joe Jajati.
+> Source available under PolyForm Noncommercial 1.0.0 — free for personal and non-commercial use.
+> Commercial use requires a separate license. Contact joe@hx2o.com.
+
 ### Your AI agent. In your pocket. For $100.
 
 Not on a $3,000 home rig you SSH into from the couch.
@@ -146,7 +150,8 @@ If any of that interests you, say hi.
 
 ## License
 
-MIT
+PolyForm Noncommercial 1.0.0 — free for personal and non-commercial use.
+Commercial use (including selling products or devices based on this code) requires a separate commercial license. Contact joe@hx2o.com.
 
 ---
 
