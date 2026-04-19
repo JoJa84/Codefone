@@ -1,10 +1,10 @@
 # HANDOFF — Session-to-session pickup
 
-**Last updated:** 2026-04-17 late evening — Pixel 8 running Claude Code natively via Android's Linux Terminal (Debian VM). Magisk abandoned. Big simplification.
+**Last updated:** 2026-04-19 — Pixel 8 reference unit: voice I/O unblocked, Claude Code now runs in bypass-permissions mode with sudo available. Confirmed end-to-end from PC.
 
 **Current status:** **v0.2 shipping stance locked.**
 - **Galaxy S20 FE (Verizon, Path B legacy):** ✅ stock + bloatware-stripped, Claude Code 2.0.x via Termux, SSH on 8022, OpenBrain MCP wired. Kept only as legacy SKU — Claude 2.1.x incompatible with Termux/Bionic.
-- **Pixel 8 (Path A, primary):** ✅ stock Android 16 (CP1A.260305.018 on slot A after OTA), ✅ Linux Terminal enabled, ✅ Debian VM booted, ✅ Claude Code **2.1.113** installed native, ✅ PATH persisted in `.bashrc` + `.profile`, ✅ SSH from PC via `adb forward tcp:2222 tcp:2222`, ✅ survives phone reboot. Magisk **uninstalled** per D20.
+- **Pixel 8 (Path A, primary):** ✅ stock Android 16 + Linux Terminal + Debian VM, ✅ Claude Code **2.1.114** native, ✅ PATH persisted, ✅ SSH from PC via nc relay on 2223 (Terminal's built-in forwarder is flaky — see FLASH.md §A6), ✅ `android.permission.RECORD_AUDIO` granted, mic verified live (RMS > 0.004 on ambient capture), ✅ voice pipeline built (`~/bin/v` whisper.cpp + `~/bin/say` espeak-ng + Stop hook), ✅ Claude `settings.local.json` → `defaultMode: bypassPermissions`, ✅ droid has `NOPASSWD: ALL` sudo, Magisk uninstalled per D20.
 - **Galaxy S23 Ultra:** not started.
 
 ## Next actions, in priority order

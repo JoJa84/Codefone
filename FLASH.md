@@ -105,6 +105,36 @@ adb forward tcp:2222 tcp:2222
 ssh -p 2222 droid@127.0.0.1
 ```
 
+**If the Terminal's built-in forwarder is wedged** (listener accepts the TCP handshake but doesn't actually bridge to the VM — symptom: `Connection closed by 127.0.0.1 port 2222` in verbose SSH output, right after the client's version string), use a toybox-nc relay instead:
+
+```bash
+# Confirm the VM is up and find its IP (usually 10.119.168.222)
+adb shell 'ping -c 2 -W 2 10.119.168.222'
+
+# Spawn a relay on Android port 2223 → VM:2222
+adb shell 'pkill -9 nc 2>/dev/null; nohup nc -L -p 2223 nc 10.119.168.222 2222 >/data/local/tmp/relay.log 2>&1 &'
+adb forward tcp:2223 tcp:2223
+
+# Then SSH through it
+ssh -p 2223 droid@127.0.0.1
+```
+
+The relay survives until the Terminal app is force-stopped.
+
+### A6b. Grant the Terminal app mic + camera (optional, needed for voice)
+
+USB-C accessories are the point, but if you want on-device voice input (whisper.cpp + arecord → Claude stdin) the Terminal app needs Android-level mic permission. Grant from PC:
+
+```bash
+adb shell pm grant com.android.virtualization.terminal android.permission.RECORD_AUDIO
+adb shell pm grant com.android.virtualization.terminal android.permission.CAMERA
+# Restart Terminal so virtio-snd picks up the new grant:
+adb shell am force-stop com.android.virtualization.terminal
+adb shell am start -n com.android.virtualization.terminal/.MainActivity
+```
+
+Verify inside the VM: `arecord -d 3 -f cd -t wav /tmp/t.wav && sox /tmp/t.wav -n stat | grep RMS`. Non-zero RMS = mic is live.
+
 ### A7. Sign in to Claude
 
 Inside the VM (on phone or over SSH):
@@ -203,6 +233,18 @@ Git Bash on Windows mangling the path. Prefix with `MSYS_NO_PATHCONV=1` or use d
 
 **"My Pixel keeps rebooting into the wrong slot after an OTA"**
 This is Android's standard A/B behavior — OTAs apply to the inactive slot, and reboot flips to it. Since we're on stock (no Magisk), this is harmless. If root was previously installed and you see it "vanish," that's why — no longer a problem on v0.2 since we dropped Magisk.
+
+**SSH connects then immediately drops with "Connection closed by 127.0.0.1 port 2222"**
+The Terminal app's port forwarder accepts the TCP handshake but silently fails to bridge packets to the VM. Happens after Terminal force-stop cycles. Fix is the toybox-nc relay on port 2223 documented in §A6 — it bypasses Terminal's forwarder entirely.
+
+**`arecord` captures only zeros / voice `v` command returns empty transcript**
+The Terminal app is missing `android.permission.RECORD_AUDIO`. From the PC:
+```
+adb shell pm grant com.android.virtualization.terminal android.permission.RECORD_AUDIO
+adb shell am force-stop com.android.virtualization.terminal
+adb shell am start -n com.android.virtualization.terminal/.MainActivity
+```
+Verify: `arecord -d 3 -f cd -t wav /tmp/t.wav && sox /tmp/t.wav -n stat | grep RMS` — RMS should be non-zero.
 
 ---
 
