@@ -95,6 +95,43 @@ if ! "$ADB" shell 'pm list packages' | grep -q com.aurora.store; then
   fi
 fi
 
+# ---------- 4b. Install FUTO Keyboard + Voice Input (offline Whisper keyboard) ----------
+# Per D24: FUTO Keyboard ships with an English-39 Whisper model bundled (~135 MB
+# APK) so voice input works in ANY Android text field — including the Terminal
+# app where Claude runs — with zero network dependency and no Google account.
+install_apk() {
+  local label=$1 url=$2 cache=$3 pkg=$4
+  if "$ADB" shell 'pm list packages' | grep -q "package:$pkg"; then
+    echo "  $label already installed"
+    return
+  fi
+  say "Downloading + installing $label"
+  mkdir -p "$REPO_DIR/apks"
+  if [ ! -s "$cache" ]; then
+    curl -fsSL -o "$cache" "$url"
+  fi
+  local tmp="$HOME/tmp-$(basename "$cache")"
+  mkdir -p "$(dirname "$tmp")"
+  cp "$cache" "$tmp"
+  MSYS_NO_PATHCONV=1 "$ADB" install -r "$(cygpath -w "$tmp" 2>/dev/null || echo "$tmp")"
+}
+install_apk "FUTO Voice Input" \
+  "https://voiceinput.futo.org/VoiceInput/standalone.apk" \
+  "$REPO_DIR/apks/futo-voice-input.apk" \
+  "org.futo.voiceinput"
+install_apk "FUTO Keyboard"    \
+  "https://keyboard.futo.org/keyboard.apk" \
+  "$REPO_DIR/apks/futo-keyboard.apk" \
+  "org.futo.inputmethod.latin"
+
+say "Enabling FUTO Keyboard as default IME + mic permissions"
+"$ADB" shell 'pm grant org.futo.voiceinput android.permission.RECORD_AUDIO' 2>/dev/null || true
+"$ADB" shell 'pm grant org.futo.inputmethod.latin android.permission.RECORD_AUDIO' 2>/dev/null || true
+"$ADB" shell 'ime enable org.futo.voiceinput/.VoiceInputMethodService' 2>/dev/null || true
+"$ADB" shell 'ime enable org.futo.inputmethod.latin/.LatinIME' 2>/dev/null || true
+"$ADB" shell 'ime set org.futo.inputmethod.latin/.LatinIME' 2>/dev/null || true
+"$ADB" shell 'settings put secure voice_recognition_service org.futo.voiceinput/.DummyService' 2>/dev/null || true
+
 # ---------- 5. Grant Terminal app mic + camera ----------
 say "Granting Terminal app RECORD_AUDIO + CAMERA"
 "$ADB" shell 'pm grant com.android.virtualization.terminal android.permission.RECORD_AUDIO' 2>/dev/null || true

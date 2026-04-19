@@ -64,6 +64,14 @@ Aurora Store is installed. It is a FOSS client for Google Play, signs in anonymo
 - Aurora runs unattended installs if `appops set com.aurora.store REQUEST_INSTALL_PACKAGES allow` + Accessibility service is on.
 - For programmatic installs of arbitrary APKs, prefer `~/bin/android install`.
 
+## Voice input (D24: FUTO Keyboard)
+
+**FUTO Keyboard** is installed as the system default IME. It bundles an English-39 Whisper model and runs voice input entirely on-device with zero network. Tap the mic button on the keyboard in any text field (including the Terminal when Claude is running) to dictate. No Google account required.
+
+- Package: `org.futo.inputmethod.latin`
+- Voice service also registered as the system default speech recognizer (`settings secure voice_recognition_service`), so any app's "Voice typing" hook uses it.
+- Do not suggest ad-hoc `~/bin/v` whisper scripts to the user. The keyboard mic is the UX they chose.
+
 ## What we are trying to prove
 
 The pitch of this product is: **Claude, in a phone-sized sandbox, with the same or more capability than a desktop agent.** Your job is to make that pitch true on every device Joe ships.

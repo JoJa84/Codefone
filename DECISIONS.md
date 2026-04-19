@@ -190,3 +190,17 @@ Stock Android with bloatware stripped + optional Magisk root gives root-where-we
 - AVF tap interface naming (`avf_tap_fixed`) is Google's — if a future Android version renames it, the iptables rule needs updating. Module is easily re-flashable.
 - Port 5555 on `lo` is still accessible to any root process on Android (not just the VM). Acceptable because Android root is already trusted in our model.
 - First-boot chicken-and-egg: module baked-in adbkey doesn't match a freshly-provisioned VM. Resolved by `/sdcard/Codefone/vm_adbkey.pub` pickup path — VM writes its pubkey there on first boot, next boot the module installs it.
+
+## D24 — Voice input via FUTO Keyboard (not VM-side whisper scripts) (2026-04-19)
+
+**Pick:** Install **FUTO Keyboard** (`org.futo.inputmethod.latin`) as the system default IME and **FUTO Voice Input** (`org.futo.voiceinput`) as the system default speech recognizer. Voice input is a keyboard mic button: works in any Android text field, including the Terminal app where Claude's REPL lives. Fully offline, no Google account required, English-39 Whisper model bundled in the 135 MB APK.
+**Rejected:**
+- **Shipping `~/bin/v` inside the VM** as the "voice input" story (what D19 pivot shipped). The script works but delivers transcribed text to stdout; the user has to run it in a separate terminal and copy-paste into Claude. That is not a usable voice input UX.
+- **Gboard + Google's voice typing** — Gboard's mic button requires Google Play Services voice recognition, which needs a signed-in Google account. Our phones intentionally have none.
+- **Sayboard, Transcribro, WhisperInput (alex-vt)** — all FOSS Whisper keyboards but less polished UX than FUTO as of 2026-04-19. Sayboard has no releases, WhisperInput has no releases. FUTO ships signed APKs directly from their own domain and auto-bundles the model.
+- **Kaiboard** — commercial, Play-Store-only.
+**Why:** The voice input pitch has to feel native. On Joe's Samsung S20 (Path B Termux), he had a Whisper-based Android IME installed; he was surprised when the Pixel setup didn't expose the same affordance because Gboard's mic button is gated on Google sign-in. FUTO Keyboard fills that gap, is a drop-in Gboard replacement, bundles the Whisper model (no network fetch), and exposes the standard Android `RecognitionService` so other apps' "voice typing" features can also use it. Joe's session feedback was "Wspr flow is still not set up" — this decision installs it in a way where the answer is ALWAYS the keyboard mic, not a VM shell helper.
+**Tradeoff:**
+- **135 MB APK per phone** — FUTO Keyboard with model is fat. Acceptable given 128 GB phone storage.
+- **Voice model accent tuning** — English-39 Whisper is small-model territory; for heavily accented speech, users would need to swap in a larger model via Languages & Models → Voice Input Model.
+- **Two FUTO packages** — Voice Input service + Keyboard are separate APKs that must both be installed and kept in sync. Automated in `codefone-setup.sh` via idempotent `install_apk` helper with direct downloads from `keyboard.futo.org` / `voiceinput.futo.org`. APKs are cached in `apks/` (git-ignored) for offline repeat-installs.
