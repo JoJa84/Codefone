@@ -191,9 +191,11 @@ Stock Android with bloatware stripped + optional Magisk root gives root-where-we
 - Port 5555 on `lo` is still accessible to any root process on Android (not just the VM). Acceptable because Android root is already trusted in our model.
 - First-boot chicken-and-egg: module baked-in adbkey doesn't match a freshly-provisioned VM. Resolved by `/sdcard/Codefone/vm_adbkey.pub` pickup path — VM writes its pubkey there on first boot, next boot the module installs it.
 
-## D24 — Voice input via FUTO Keyboard (not VM-side whisper scripts) (2026-04-19)
+## D24 — FUTO Keyboard for typing, ~~FUTO Voice Input~~ for voice (2026-04-19, voice part superseded by D25)
 
-**Pick:** Install **FUTO Keyboard** (`org.futo.inputmethod.latin`) as the system default IME and **FUTO Voice Input** (`org.futo.voiceinput`) as the system default speech recognizer. Voice input is a keyboard mic button: works in any Android text field, including the Terminal app where Claude's REPL lives. Fully offline, no Google account required, English-39 Whisper model bundled in the 135 MB APK.
+**Pick:** Install **FUTO Keyboard** (`org.futo.inputmethod.latin`) as the system default IME and ~~**FUTO Voice Input** (`org.futo.voiceinput`) as the system default speech recognizer~~. Voice input is a keyboard mic button: works in any Android text field, including the Terminal app where Claude's REPL lives. Fully offline, no Google account required, English-39 Whisper model bundled in the 135 MB APK.
+
+**Post-install verdict (2026-04-19 evening):** FUTO Keyboard typing is fine and stays as primary IME. **FUTO Voice Input's streaming transcription is unusable** — it duplicates/hallucinates across streaming segments (live output: `"Okay hereOkay, here, hereOkay, I, I am I am..."`). The bundled English-39 model is too small for reliable dictation in practice. Voice is replaced by WhisperIME — see D25.
 **Rejected:**
 - **Shipping `~/bin/v` inside the VM** as the "voice input" story (what D19 pivot shipped). The script works but delivers transcribed text to stdout; the user has to run it in a separate terminal and copy-paste into Claude. That is not a usable voice input UX.
 - **Gboard + Google's voice typing** — Gboard's mic button requires Google Play Services voice recognition, which needs a signed-in Google account. Our phones intentionally have none.
@@ -204,3 +206,20 @@ Stock Android with bloatware stripped + optional Magisk root gives root-where-we
 - **135 MB APK per phone** — FUTO Keyboard with model is fat. Acceptable given 128 GB phone storage.
 - **Voice model accent tuning** — English-39 Whisper is small-model territory; for heavily accented speech, users would need to swap in a larger model via Languages & Models → Voice Input Model.
 - **Two FUTO packages** — Voice Input service + Keyboard are separate APKs that must both be installed and kept in sync. Automated in `codefone-setup.sh` via idempotent `install_apk` helper with direct downloads from `keyboard.futo.org` / `voiceinput.futo.org`. APKs are cached in `apks/` (git-ignored) for offline repeat-installs.
+
+## D25 — Voice input via WhisperIME (org.woheller69.whisper), switched-to IME pattern (2026-04-19)
+
+**Pick:** Install **WhisperIME** (`org.woheller69.whisper` v3.6, GPL-3, TFLite-based) as an **auxiliary voice-only IME**. Primary keyboard stays FUTO Keyboard (per D24). User flow: tap into any text field → open the Android IME switcher (notification chip or keyboard icon in nav bar) → pick WhisperIME → tap mic → speak → transcription is `commitText`'d into the field → switch back to FUTO. Ship with **`whisper-tiny.en.tflite`** (41 MB) and **`filters_vocab_en.bin`** (573 KB) placed at `/sdcard/Android/data/org.woheller69.whisper/files/`.
+
+**Rejected:**
+- **FUTO Voice Input** (what D24 originally picked) — live streaming transcription hallucinates/duplicates. Usable as service in theory, useless for dictation in practice. Disabled, package left installed for now.
+- **Transcribro** (`dev.soupslurpr.transcribro`) — FOSS whisper.cpp-based IME, UX was poor when tested on-device.
+- **whisper.cpp in VM** (`~/bin/v`) — kept for CLI scripting inside the VM but rejected as the "voice input" story for the same reason as before: no cursor integration into the terminal text entry.
+- **Setting WhisperIME as system-wide `voice_recognition_service`** — WhisperIME does not expose a `RecognitionService`, only an `InputMethodService`. It can't fill that role. The voice_recognition_service setting is left pointing at Transcribro or similar; it's not on the critical path because nothing we ship calls `SpeechRecognizer.createSpeechRecognizer()`.
+
+**Why:** This is the exact flow Joe had working on his Samsung S20 (the reference device he asked us to mirror). The S20 used Samsung Honeyboard as primary + WhisperIME as switchable secondary; `settings get secure enabled_input_methods` on the S20 literally shows `...HoneyBoardService;65537:org.woheller69.whisper/com.whispertflite.WhisperInputMethodService`. WhisperIME uses TFLite with NNAPI/GPU delegates, so inference latency beats FUTO's CPU-only whisper.cpp. The tiny.en model (41 MB) gives fluent English dictation; larger multilingual variants (`whisper-base.TOP_WORLD.tflite` 107 MB, `whisper-small.TOP_WORLD.tflite` 307 MB) can be dropped into the same directory if needed.
+
+**Tradeoff:**
+- **Two-tap flow (switch IME, tap mic)** vs. one-tap (mic on primary keyboard). Acceptable because it works, reliably.
+- **Binary redistribution** — WhisperIME is GPL-3, redistribution fine. The `.tflite` model is redistributable (it's a converted OpenAI Whisper weights file, MIT-licensed source). APK + model go in `apks/` / `models/` (both git-ignored); setup script fetches or falls back to local cache.
+- **Upstream source:** APK from F-Droid or woheller69's GitHub releases (`github.com/woheller69/whisperIME`). Model files bundled with the app's APK assets — for redistribution we copy them out of an installed instance rather than pulling from a random CDN.

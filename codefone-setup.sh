@@ -95,42 +95,60 @@ if ! "$ADB" shell 'pm list packages' | grep -q com.aurora.store; then
   fi
 fi
 
-# ---------- 4b. Install FUTO Keyboard + Voice Input (offline Whisper keyboard) ----------
-# Per D24: FUTO Keyboard ships with an English-39 Whisper model bundled (~135 MB
-# APK) so voice input works in ANY Android text field — including the Terminal
-# app where Claude runs — with zero network dependency and no Google account.
+# ---------- 4b. Install keyboard (FUTO) + voice IME (WhisperIME) ----------
+# Per D24: FUTO Keyboard is the system default IME for typing.
+# Per D25: WhisperIME (org.woheller69.whisper) is installed as an auxiliary
+# voice-only IME. User switches to it via the Android IME switcher to dictate
+# in any text field, including the Terminal where Claude runs. TFLite model
+# is pushed to the app's external data dir. Fully offline, no Google.
 install_apk() {
   local label=$1 url=$2 cache=$3 pkg=$4
   if "$ADB" shell 'pm list packages' | grep -q "package:$pkg"; then
     echo "  $label already installed"
     return
   fi
-  say "Downloading + installing $label"
+  say "Installing $label"
   mkdir -p "$REPO_DIR/apks"
+  if [ ! -s "$cache" ] && [ -n "$url" ]; then
+    curl -fsSL -o "$cache" "$url" || true
+  fi
   if [ ! -s "$cache" ]; then
-    curl -fsSL -o "$cache" "$url"
+    echo "  ERROR: $label APK missing at $cache and no upstream URL. Skipping."
+    return 1
   fi
   local tmp="$HOME/tmp-$(basename "$cache")"
   mkdir -p "$(dirname "$tmp")"
   cp "$cache" "$tmp"
   MSYS_NO_PATHCONV=1 "$ADB" install -r "$(cygpath -w "$tmp" 2>/dev/null || echo "$tmp")"
 }
-install_apk "FUTO Voice Input" \
-  "https://voiceinput.futo.org/VoiceInput/standalone.apk" \
-  "$REPO_DIR/apks/futo-voice-input.apk" \
-  "org.futo.voiceinput"
 install_apk "FUTO Keyboard"    \
   "https://keyboard.futo.org/keyboard.apk" \
   "$REPO_DIR/apks/futo-keyboard.apk" \
   "org.futo.inputmethod.latin"
+install_apk "WhisperIME"       \
+  "https://f-droid.org/repo/org.woheller69.whisper_36.apk" \
+  "$REPO_DIR/apks/whisperime-3.6.apk" \
+  "org.woheller69.whisper"
 
-say "Enabling FUTO Keyboard as default IME + mic permissions"
-"$ADB" shell 'pm grant org.futo.voiceinput android.permission.RECORD_AUDIO' 2>/dev/null || true
+say "Pushing WhisperIME model files"
+WHISPER_DIR="/sdcard/Android/data/org.woheller69.whisper/files"
+"$ADB" shell "mkdir -p $WHISPER_DIR"
+for f in whisper-tiny.en.tflite filters_vocab_en.bin; do
+  src="$REPO_DIR/models/$f"
+  if [ ! -s "$src" ]; then
+    echo "  WARNING: $f not in repo models/ — voice will not work until it is placed there"
+    continue
+  fi
+  MSYS_NO_PATHCONV=1 "$ADB" push "$(cygpath -w "$src" 2>/dev/null || echo "$src")" "//sdcard/Android/data/org.woheller69.whisper/files/$f" >/dev/null
+done
+
+say "Enabling FUTO Keyboard (primary) + WhisperIME (voice) + mic permissions"
 "$ADB" shell 'pm grant org.futo.inputmethod.latin android.permission.RECORD_AUDIO' 2>/dev/null || true
-"$ADB" shell 'ime enable org.futo.voiceinput/.VoiceInputMethodService' 2>/dev/null || true
+"$ADB" shell 'pm grant org.woheller69.whisper    android.permission.RECORD_AUDIO' 2>/dev/null || true
 "$ADB" shell 'ime enable org.futo.inputmethod.latin/.LatinIME' 2>/dev/null || true
-"$ADB" shell 'ime set org.futo.inputmethod.latin/.LatinIME' 2>/dev/null || true
-"$ADB" shell 'settings put secure voice_recognition_service org.futo.voiceinput/.DummyService' 2>/dev/null || true
+"$ADB" shell 'ime enable org.woheller69.whisper/com.whispertflite.WhisperInputMethodService' 2>/dev/null || true
+"$ADB" shell 'ime set    org.futo.inputmethod.latin/.LatinIME' 2>/dev/null || true
+"$ADB" shell 'ime disable org.futo.voiceinput/.VoiceInputMethodService' 2>/dev/null || true
 
 # ---------- 5. Grant Terminal app mic + camera ----------
 say "Granting Terminal app RECORD_AUDIO + CAMERA"

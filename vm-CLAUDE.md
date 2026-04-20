@@ -64,13 +64,18 @@ Aurora Store is installed. It is a FOSS client for Google Play, signs in anonymo
 - Aurora runs unattended installs if `appops set com.aurora.store REQUEST_INSTALL_PACKAGES allow` + Accessibility service is on.
 - For programmatic installs of arbitrary APKs, prefer `~/bin/android install`.
 
-## Voice input (D24: FUTO Keyboard)
+## Voice input (D24 + D25: FUTO Keyboard for typing, WhisperIME for voice)
 
-**FUTO Keyboard** is installed as the system default IME. It bundles an English-39 Whisper model and runs voice input entirely on-device with zero network. Tap the mic button on the keyboard in any text field (including the Terminal when Claude is running) to dictate. No Google account required.
+Two-IME setup, matching Joe's proven Samsung S20 flow:
 
-- Package: `org.futo.inputmethod.latin`
-- Voice service also registered as the system default speech recognizer (`settings secure voice_recognition_service`), so any app's "Voice typing" hook uses it.
-- Do not suggest ad-hoc `~/bin/v` whisper scripts to the user. The keyboard mic is the UX they chose.
+- **Primary keyboard** (typing): **FUTO Keyboard** (`org.futo.inputmethod.latin`) as system default IME. Offline, no Google.
+- **Voice IME** (dictation): **WhisperIME** (`org.woheller69.whisper` v3.6) as a secondary enabled IME. TFLite-based, uses `whisper-tiny.en.tflite` at `/sdcard/Android/data/org.woheller69.whisper/files/`. Offline.
+
+**User flow:** Tap into any text field (including the Terminal where Claude runs) → open IME switcher (notification chip when keyboard is visible, or keyboard icon in nav bar) → pick **WhisperIME** → tap mic → speak → text is committed into the field → switch back to FUTO to edit.
+
+FUTO Voice Input (`org.futo.voiceinput`) is installed but **disabled** — its streaming transcription quality is poor. Do not suggest re-enabling it.
+
+Do not suggest ad-hoc `~/bin/v` whisper scripts to the user for dictation. The WhisperIME switch is the shipped UX. `~/bin/v` still exists for CLI scripting if you need to transcribe audio files from the command line.
 
 ## What we are trying to prove
 
