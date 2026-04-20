@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
-# Claude Stop hook: read the final assistant message from the transcript and
-# speak it aloud via Piper neural TTS, routed through PulseAudio so Android's
-# media audio manager handles output correctly.
+# Stop hook: read Claude's final assistant message from the transcript and speak it aloud.
+# Skips code blocks, markdown fluff, and caps length so long outputs don't monopolize the speaker.
 set -euo pipefail
+
+# Hooks are spawned by Claude Code without the PulseAudio env that interactive
+# shells inherit, so paplay silently fails. Re-export them here so the hook is
+# self-sufficient regardless of parent environment.
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+export PULSE_SERVER="${PULSE_SERVER:-unix:$XDG_RUNTIME_DIR/pulse/native}"
 
 INPUT=$(cat)
 TRANSCRIPT=$(printf '%s' "$INPUT" | jq -r '.transcript_path // empty')
 [ -n "$TRANSCRIPT" ] && [ -f "$TRANSCRIPT" ] || exit 0
 
+# Pull the text content of the most recent assistant message that actually
+# contains text (skip messages that are pure tool_use — those have no prose
+# to speak). Walks the transcript in reverse.
 LAST=$(tac "$TRANSCRIPT" | while IFS= read -r line; do
   role=$(printf '%s' "$line" | jq -r '.message.role // .type // empty' 2>/dev/null || true)
   [ "$role" = "assistant" ] || continue
@@ -20,10 +28,11 @@ LAST=$(tac "$TRANSCRIPT" | while IFS= read -r line; do
     printf '%s' "$text"
     break
   fi
-done)
+done) || true
 
 [ -n "$LAST" ] || exit 0
 
+# Clean for TTS: strip code fences, inline code, URLs, markdown formatting, cap length.
 CLEAN=$(printf '%s' "$LAST" \
   | awk 'BEGIN{in_code=0} /^```/{in_code=!in_code; next} !in_code{print}' \
   | sed -E 's/`[^`]*`/ /g; s/\*\*([^*]+)\*\*/\1/g; s/\*([^*]+)\*/\1/g; s/_([^_]+)_/\1/g; s/#+ //g' \
@@ -34,7 +43,10 @@ CLEAN=$(printf '%s' "$LAST" \
 
 [ -n "$CLEAN" ] || exit 0
 
+# Speak in background so hook returns quickly. Prefer piper (neural TTS, natural voice);
+# fall back to espeak-ng if piper is missing.
 PIPER_BIN="$HOME/piper/bin/piper"
+# Pick best available voice: high > libritts_r > medium
 PIPER_VOICE=""
 for v in en_US-libritts_r-medium en_US-lessac-high en_US-amy-medium; do
   if [ -f "$HOME/piper/voices/$v.onnx" ]; then

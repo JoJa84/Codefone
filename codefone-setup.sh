@@ -159,6 +159,14 @@ say "Granting Terminal app RECORD_AUDIO + CAMERA"
 "$ADB" shell 'pm grant com.android.virtualization.terminal android.permission.RECORD_AUDIO' 2>/dev/null || true
 "$ADB" shell 'pm grant com.android.virtualization.terminal android.permission.CAMERA' 2>/dev/null || true
 
+# ---------- 5b. Screen never sleeps ----------
+# The Terminal app loses audio focus when the screen blacks out — kills long
+# voice sessions. This is an agent appliance, not a phone someone looks at.
+# (Found by on-device Claude, 2026-04-20.)
+say "Disabling screen timeout + enabling stay-on-while-plugged-in"
+"$ADB" shell 'settings put system screen_off_timeout 2147483647' 2>/dev/null || true
+"$ADB" shell 'settings put global stay_on_while_plugged_in 15'    2>/dev/null || true
+
 # ---------- 6. Launch Terminal / start VM ----------
 say "Starting Debian VM (Terminal app)"
 "$ADB" shell 'am force-stop com.android.virtualization.terminal'
@@ -224,9 +232,11 @@ else
   # If not provided, the phone still ships with adb+nc relay as its primary transport.
   if [ -n "${TS_AUTH_KEY:-}" ]; then
     say "Enrolling VM in Tailscale (TS_AUTH_KEY provided)"
+    # --ssh enables Tailscale SSH (tainlet-identity auth, no PAM password needed).
+    # --accept-routes lets the VM reach other subnet routes advertised by the tainlet.
     ssh "${SSH_OPTS[@]}" droid@127.0.0.1 \
-      "curl -fsSL https://tailscale.com/install.sh | sudo sh && \
-       sudo tailscale up --auth-key=$TS_AUTH_KEY --ssh=false --hostname=codefone-pixel8 && \
+      "curl -fsSL https://tailscale.com/install.sh | sudo -E sh && \
+       sudo tailscale up --auth-key=$TS_AUTH_KEY --ssh --accept-routes --hostname=codefone-pixel8 && \
        tailscale ip -4"
   else
     echo "  (skipping Tailscale — set TS_AUTH_KEY to enroll this device)"

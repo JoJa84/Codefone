@@ -253,4 +253,19 @@ Stock Android with bloatware stripped + optional Magisk root gives root-where-we
 
 **Tradeoff:** If a user installs a larger/better Piper voice themselves (e.g., `en_US-libritts_r-high`), the `say` script will pick it up automatically (prefers `libritts_r-medium > lessac-high > amy-medium` by default). Kokoro-82M remains queued as the quality upgrade — see HANDOFF.md.
 
+## D28 — Screen never sleeps + SIGPIPE-proof hooks (2026-04-20, on-device Claude)
+
+**Pick:** Every Codefone ships with Android screen timeout maxed out (`settings put system screen_off_timeout 2147483647`) and stay-on-while-plugged-in = 15 (all charger types). Every Claude hook that reads pipelines with early-exit (`tac | while ...; break`) guards the assignment with `|| true` to swallow SIGPIPE (exit 141).
+
+**Why:**
+- **Screen timeout:** when the Terminal app blacks out, Android's AudioFlinger strips its audio focus. Long Claude voice sessions go silent after ~30s. Fixed by never letting the screen sleep. Codefone is an appliance — nobody's looking at the lockscreen anyway.
+- **SIGPIPE fix:** the Stop hook was dying silently on EVERY reply with exit 141. Root cause found by on-device Claude: with `set -euo pipefail`, when `break` fires inside a piped `tac | while` loop, the reader closes the pipe, `tac` gets SIGPIPE writing to it, exits 141, `pipefail` propagates 141 through the assignment, and `set -e` kills the hook before Piper/paplay ever run. The paplay-vs-aplay + env-vars theories were real but secondary — **141 was the actual silence**. Adding `|| true` to the `LAST=$(...)` assignment swallows the SIGPIPE cleanly. This generalizes: **any hook using early-exit reads from `tac`/`head`/`sort -u` style pipelines under `pipefail` needs `|| true` on the assignment, or `set +o pipefail` locally.**
+
+**Rejected:**
+- **`screen_off_timeout` set to a smaller value (e.g. 30 min):** still strips audio focus eventually. All-or-nothing is the right call for an appliance.
+- **Dropping `set -euo pipefail` from hooks wholesale:** pipefail catches real bugs (jq typos, missing commands). Local `|| true` on the one known-safe early-exit is the right surgical fix.
+
+**Tradeoff:** The screen-always-on setting shows up as a battery warning to buyers who use the phone as a phone. Codefone isn't a phone, but we'll want this in the product doc so people aren't surprised.
+
+
 
