@@ -133,13 +133,16 @@ install_apk "WhisperIME"       \
 say "Pushing WhisperIME model files"
 WHISPER_DIR="/sdcard/Android/data/org.woheller69.whisper/files"
 "$ADB" shell "mkdir -p $WHISPER_DIR"
+missing_models=()
 for f in whisper-tiny.en.tflite filters_vocab_en.bin; do
   src="$REPO_DIR/models/$f"
-  if [ ! -s "$src" ]; then
-    echo "  WARNING: $f not in repo models/ — voice will not work until it is placed there"
-    continue
-  fi
-  MSYS_NO_PATHCONV=1 "$ADB" push "$(cygpath -w "$src" 2>/dev/null || echo "$src")" "//sdcard/Android/data/org.woheller69.whisper/files/$f" >/dev/null
+  [ -s "$src" ] || missing_models+=("$f")
+done
+if [ ${#missing_models[@]} -gt 0 ]; then
+  die "Missing voice model file(s): ${missing_models[*]} in $REPO_DIR/models/. See models/README.md for how to populate them. Refusing to ship a phone with broken voice."
+fi
+for f in whisper-tiny.en.tflite filters_vocab_en.bin; do
+  MSYS_NO_PATHCONV=1 "$ADB" push "$(cygpath -w "$REPO_DIR/models/$f" 2>/dev/null || echo "$REPO_DIR/models/$f")" "//sdcard/Android/data/org.woheller69.whisper/files/$f" >/dev/null
 done
 
 say "Enabling FUTO Keyboard (primary) + WhisperIME (voice) + mic permissions"
@@ -189,20 +192,45 @@ if [ "$SKIP_VM" = "1" ]; then
 else
   # Ensure we can SSH (VM might not have openssh-server yet; first-boot handled later)
   sleep 3
-  if ! ssh -p 2223 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 droid@127.0.0.1 'true' 2>/dev/null; then
-    echo "⚠  SSH not yet available — the VM is on its first boot. On the phone, open the Terminal app and run:"
+  SSH_OPTS=(-p 2223 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
+  SCP_OPTS=(-P 2223 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null)
+  if ! ssh "${SSH_OPTS[@]}" droid@127.0.0.1 'true' 2>/dev/null; then
+    PUBKEY=$(cat ~/.ssh/id_ed25519.pub 2>/dev/null || cat ~/.ssh/id_rsa.pub 2>/dev/null || true)
+    if [ -z "$PUBKEY" ]; then
+      die "No PC-side SSH pubkey found at ~/.ssh/id_{ed25519,rsa}.pub. Generate one and re-run."
+    fi
+    echo "⚠  SSH not yet available — the VM is on its first boot. On the phone, open the Terminal app and run these two commands (copy/paste):"
+    echo
     echo "    curl -fsSL https://claude.ai/install.sh | bash"
-    echo "    sudo apt install -y openssh-server"
-    echo "    echo 'Port 2222' | sudo tee -a /etc/ssh/sshd_config && sudo systemctl restart ssh"
-    echo "    mkdir -p ~/.ssh && curl -fsSL https://raw.githubusercontent.com/JoJa84/Codefone/main/setup-keys.sh | bash"
+    echo "    curl -fsSL https://raw.githubusercontent.com/JoJa84/Codefone/main/setup-keys.sh | bash -s -- '$PUBKEY'"
+    echo
     echo "Then re-run: bash codefone-setup.sh"
     exit 0
   fi
 
-  say "Installing Claude Code + helpers + CLAUDE.md"
-  scp -P 2223 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-    "$REPO_DIR/vm-CLAUDE.md" droid@127.0.0.1:/home/droid/.claude/CLAUDE.md
-  ssh -p 2223 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null droid@127.0.0.1 "$(cat "$REPO_DIR/scripts/vm-provision.sh" 2>/dev/null || echo 'echo no vm-provision.sh yet')"
+  say "Preparing VM directories"
+  ssh "${SSH_OPTS[@]}" droid@127.0.0.1 'mkdir -p ~/.claude/hooks ~/bin'
+
+  say "Copying VM-side assets (CLAUDE.md + say + hook)"
+  scp "${SCP_OPTS[@]}" "$REPO_DIR/vm-CLAUDE.md"                       droid@127.0.0.1:/home/droid/.claude/CLAUDE.md
+  scp "${SCP_OPTS[@]}" "$REPO_DIR/scripts/vm-files/say"               droid@127.0.0.1:/home/droid/bin/say
+  scp "${SCP_OPTS[@]}" "$REPO_DIR/scripts/vm-files/speak-response.sh" droid@127.0.0.1:/home/droid/.claude/hooks/speak-response.sh
+  ssh "${SSH_OPTS[@]}" droid@127.0.0.1 'chmod +x ~/bin/say ~/.claude/hooks/speak-response.sh'
+
+  say "Running vm-provision.sh over SSH"
+  ssh "${SSH_OPTS[@]}" droid@127.0.0.1 'bash -s' < "$REPO_DIR/scripts/vm-provision.sh"
+
+  # Optional Tailscale enrollment — gated on $TS_AUTH_KEY being set by operator.
+  # If not provided, the phone still ships with adb+nc relay as its primary transport.
+  if [ -n "${TS_AUTH_KEY:-}" ]; then
+    say "Enrolling VM in Tailscale (TS_AUTH_KEY provided)"
+    ssh "${SSH_OPTS[@]}" droid@127.0.0.1 \
+      "curl -fsSL https://tailscale.com/install.sh | sudo sh && \
+       sudo tailscale up --auth-key=$TS_AUTH_KEY --ssh=false --hostname=codefone-pixel8 && \
+       tailscale ip -4"
+  else
+    echo "  (skipping Tailscale — set TS_AUTH_KEY to enroll this device)"
+  fi
 fi
 
 # ---------- 10. Register VM adbkey with the Magisk module ----------
@@ -225,10 +253,36 @@ sleep 2
 OUT=$(ssh -p 2223 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null droid@127.0.0.1 '
   claude --version 2>&1 | head -1
   ~/bin/android su "id" 2>&1 | head -1
+  command -v paplay >/dev/null && echo paplay_ok
+  test -x ~/bin/say && echo say_ok
+  test -x ~/.claude/hooks/speak-response.sh && echo hook_ok
+  test -x ~/piper/bin/piper && ls ~/piper/voices/*.onnx 2>/dev/null | head -1 | grep -q onnx && echo piper_ok
 ' 2>&1 || true)
 echo "$OUT"
-echo "$OUT" | grep -q 'Claude Code' && echo "✓ Claude installed" || echo "✗ Claude missing"
-echo "$OUT" | grep -q 'uid=0'       && echo "✓ Android root via bridge" || echo "✗ bridge broken"
+echo "$OUT" | grep -q 'Claude Code' && echo "✓ Claude installed"       || { echo "✗ Claude missing"; FAIL=1; }
+echo "$OUT" | grep -q 'uid=0'       && echo "✓ Android root via bridge"|| { echo "✗ bridge broken"; FAIL=1; }
+echo "$OUT" | grep -q paplay_ok     && echo "✓ paplay present"         || { echo "✗ paplay missing (TTS will be silent)"; FAIL=1; }
+echo "$OUT" | grep -q say_ok        && echo "✓ ~/bin/say installed"    || { echo "✗ ~/bin/say missing"; FAIL=1; }
+echo "$OUT" | grep -q hook_ok       && echo "✓ Stop hook installed"    || { echo "✗ Stop hook missing"; FAIL=1; }
+echo "$OUT" | grep -q piper_ok      && echo "✓ Piper + voice model"    || { echo "✗ Piper or voice model missing"; FAIL=1; }
+
+# IME postcondition — D25 invariant: FUTO primary + WhisperIME enabled secondary.
+DEFAULT_IME=$("$ADB" shell 'settings get secure default_input_method' | tr -d '\r')
+ENABLED_IMES=$("$ADB" shell 'settings get secure enabled_input_methods' | tr -d '\r')
+case "$DEFAULT_IME" in
+  *org.futo.inputmethod.latin*) echo "✓ FUTO Keyboard is default IME" ;;
+  *) echo "✗ default IME is '$DEFAULT_IME' (expected FUTO); typing will use wrong keyboard"; FAIL=1 ;;
+esac
+case "$ENABLED_IMES" in
+  *org.woheller69.whisper*) echo "✓ WhisperIME enabled (voice)" ;;
+  *) echo "✗ WhisperIME is not in enabled_input_methods; dictation unavailable"; FAIL=1 ;;
+esac
+
+if [ "${FAIL:-0}" = "1" ]; then
+  echo
+  echo "Setup completed with verification failures above. Device is NOT ready to ship."
+  exit 2
+fi
 
 say "DONE. Summary:"
 cat <<EOF

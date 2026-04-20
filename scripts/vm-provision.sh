@@ -9,10 +9,17 @@ PC_KEY_URL="${PC_KEY_URL:-}"   # optional: URL serving the PC's ssh public key
 # ---- 1. Packages ----
 sudo apt-get update -q
 sudo apt-get install -y -q --no-install-recommends \
-  openssh-server curl ca-certificates git \
+  openssh-server curl ca-certificates git jq \
   android-tools-adb python3 python3-pip \
-  sox alsa-utils espeak-ng \
+  sox alsa-utils pulseaudio-utils espeak-ng \
   build-essential cmake ffmpeg unzip
+
+# paplay is the actual playback tool used by TTS (see D27). AVF's VirtIO audio
+# only plays reliably when routed through PulseAudio; direct aplay is silent.
+command -v paplay >/dev/null 2>&1 || {
+  echo "ERROR: paplay missing after apt install. Cannot guarantee TTS output." >&2
+  exit 1
+}
 
 # ---- 2. Claude Code (native installer) ----
 if ! command -v claude >/dev/null 2>&1; then
@@ -176,11 +183,17 @@ for v in en_US-amy-medium en_US-libritts_r-medium; do
   fi
 done
 
-# Install working say + Stop hook from repo (see scripts/vm-files/).
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" &>/dev/null && pwd)"
-install -m 755 "$SCRIPT_DIR/vm-files/say"                 ~/bin/say
-mkdir -p ~/.claude/hooks
-install -m 755 "$SCRIPT_DIR/vm-files/speak-response.sh"   ~/.claude/hooks/speak-response.sh
+# ~/bin/say and ~/.claude/hooks/speak-response.sh are scp'd in by
+# codefone-setup.sh BEFORE this script runs (script is piped to SSH with
+# no filesystem context, so we cannot reference repo paths here). Guard
+# against the case where they're missing so provisioning fails loudly.
+for f in ~/bin/say ~/.claude/hooks/speak-response.sh; do
+  if [ ! -x "$f" ]; then
+    echo "ERROR: $f was not copied into the VM before provisioning." >&2
+    echo "       codefone-setup.sh must scp scripts/vm-files/* before running this." >&2
+    exit 1
+  fi
+done
 
 # ---- 8. Claude settings: bypassPermissions by default ----
 mkdir -p ~/.claude

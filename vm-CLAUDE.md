@@ -121,9 +121,9 @@ Joe does not want to be the courier. Use the bridge, use SSH back to PC (if wire
 
 - Model: Pixel 8 (shiba), Android 16 CP1A.260305.018
 - Magisk 30.7 on both A/B slots, `persist.adb.tcp.port=5555`, VM adbkey in `/data/misc/adb/adb_keys`
-- VM: Debian 12, Claude Code 2.1.114, `bypassPermissions`, sudo NOPASSWD, droid password `codefone`
+- VM: Debian 12, Claude Code 2.1.114, `bypassPermissions`, sudo NOPASSWD (droid user has no shared password; PC SSH is pubkey-only)
 - VM IP: dynamic per cold boot via AVF tap — discover with `ip route | awk '/default/{print $3}'` for gateway
-- **Tailscale (D26):** VM is on Joe's tainlet as `codefone-pixel8` @ `100.65.116.108`, FQDN `codefone-pixel8.tail0d843c.ts.net`. Any machine on the same tainlet can `ssh -p 2222 droid@codefone-pixel8.tail0d843c.ts.net` — no adb needed, network-independent.
+- **Tailscale (D26, optional):** if the operator provisioned Tailscale (`TS_AUTH_KEY` set during setup), the VM joins the operator's own tainlet and becomes reachable as `<hostname>.<tailnet>.ts.net`. Not all shipped units have this; check `tailscale status` before assuming. The always-available transport is the PC-side adb + nc relay, not Tailscale.
 - Legacy PC SSH: `ssh -p 2223 droid@127.0.0.1` via `nc` relay (fallback when off-tainlet — see FLASH.md §A6)
 - **Voice I/O:** `~/bin/v` (whisper.cpp small.en for CLI transcription), `~/bin/say` (Piper neural TTS via PulseAudio → `paplay`, D27), Stop hook `~/.claude/hooks/speak-response.sh` speaks the last assistant message. **Always use `paplay`, never `aplay` — raw ALSA silently drops on AVF's VirtIO audio.**
 - Aurora Store v4.8.1 installed
